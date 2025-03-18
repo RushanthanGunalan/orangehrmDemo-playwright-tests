@@ -13,8 +13,8 @@ export default class LoginPage {
   }
 
   async login(userName, passWord) {
-    await this.actions.fill("input[placeholder='Username']", userName);
-    await this.actions.fill("input[placeholder='Password']", passWord);
+    await this.actions.fill("input[placeholder='username']", userName);
+    await this.actions.fill("input[placeholder='password']", passWord);
     await this.actions.click("button[type='submit']");
   }
 
