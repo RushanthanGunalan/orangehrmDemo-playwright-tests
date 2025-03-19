@@ -10,7 +10,7 @@ test.describe("Navigation To Specific Pages from Side Panel", () => {
     await pm.loginPage.login("Admin", "admin123");
     await pm.loginPage.assertLoginValidation("Dashboard");
   });
-  test.only("Navigating to Admin Page", async () => {
+  test("Navigating to Admin Page", async () => {
     await pm.adminPage.navigateToAdminPage();
     await pm.adminPage.assertAdminPage();
     await pm.adminPage.validateAdminPageIsLoaded("Admin");

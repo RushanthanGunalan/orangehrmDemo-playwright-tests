@@ -7,6 +7,13 @@ export default class CommonActions {
     await this.page.goto(url);
   }
 
+  async navigateSidePanel(SidePanelText) {
+    await this.page
+      .locator("span.oxd-text.oxd-text--span.oxd-main-menu-item--name")
+      .filter({ hasText: SidePanelText })
+      .click();
+  }
+
   async click(selector) {
     await this.page.click(selector);
   }
