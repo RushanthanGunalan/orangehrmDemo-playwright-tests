@@ -52,6 +52,8 @@ export default class PIMPage {
     console.log("Retrieved First Name: ", firstName);
     console.log("Retrieved Last Name: ", lastName);
     expect(expectedfirstName).toContain(firstName); // Check first name
-    expect(expectedlastName).toContain(lastName); // Check first name
+    expect(expectedlastName).toContain(lastName); // Check last name
   }
+
+  async AddEmployeeLoginCredentials(userName, passWord) {}
 }

@@ -1,12 +1,15 @@
 import PomManager from "../pages/PomManager";
 import { faker } from "@faker-js/faker";
 import { expect, test } from "@playwright/test";
+import CommonActions from "../utils/commonActions";
 
 let pm;
+let ca;
 
 test.describe("Login Tests", () => {
   test.beforeEach(async ({ page }) => {
     pm = new PomManager(page);
+    ca = new CommonActions(page);
     await pm.loginPage.navigate();
     await pm.loginPage.login("Admin", "admin123");
     await pm.loginPage.assertLoginValidation("Dashboard");
@@ -21,7 +24,7 @@ test.describe("Login Tests", () => {
   const middleName = faker.person.middleName();
   const randomID = faker.string.alphanumeric(6);
 
-  test.only("Add Employee Details with optional Fields", async () => {
+  test("Add Employee Details with optional Fields", async () => {
     await pm.pimPage.navigatetoPIMPage();
     await pm.pimPage.assertPIMPage();
     await pm.pimPage.validatePIMPagePath("PIM");
@@ -30,5 +33,9 @@ test.describe("Login Tests", () => {
     await pm.pimPage.saveEmployeeDetails();
     await pm.page.waitForTimeout(10000);
     await pm.pimPage.validateAddedEmployeeDetails(firstName, lastName);
+  });
+
+  test.only("Testing Logout Common Action", async () => {
+    await ca.isLoggedOut();
   });
 });

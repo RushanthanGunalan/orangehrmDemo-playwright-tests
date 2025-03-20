@@ -25,4 +25,14 @@ export default class CommonActions {
   async getText(selector) {
     return await this.page.textContent(selector);
   }
+
+  async isChecked(selector) {
+    return await this.page.isChecked(selector);
+  }
+
+  async isLoggedOut() {
+    await this.page.click(".oxd-userdropdown-name");
+    await this.page.locator("//a[normalize-space()='Logout']").click();
+    await this.getText("//h5[normalize-space()='Login']");
+  }
 }
