@@ -1,6 +1,6 @@
 import PomManager from "../pages/PomManager";
 import { faker } from "@faker-js/faker";
-import { expect, test } from "@playwright/test";
+import { browser, Page, chromium, expect, test } from "@playwright/test";
 import CommonActions from "../utils/commonActions";
 import PIMPage from "./../pages/PIMPage";
 import LoginPage from "./../pages/LoginPage";
@@ -8,12 +8,23 @@ import LoginPage from "./../pages/LoginPage";
 let pm;
 
 test.describe("Login Tests", () => {
-  test.beforeEach(async ({ page }) => {
+  let browserContext;
+  test.beforeAll(async () => {
+    const browser = await chromium.launch();
+    browserContext = await browser.newContext();
+    const page = await browserContext.newPage();
     pm = new PomManager(page);
     await pm.loginPage.navigate();
     await pm.loginPage.login("Admin", "admin123");
     await pm.loginPage.assertLoginValidation("Dashboard");
   });
+
+  // test.beforeEach(async ({ page }) => {
+  //   pm = new PomManager(page);
+  //   await pm.loginPage.navigate();
+  //   await pm.loginPage.login("Admin", "admin123");
+  //   await pm.loginPage.assertLoginValidation("Dashboard");
+  // });
 
   test.afterEach(async ({ page }) => {
     await page.close();
@@ -52,7 +63,7 @@ test.describe("Login Tests", () => {
     await pm.pimPage.assertCreatedEmployeeCredential(firstName, lastName);
   });
 
-  test.only("Creating Employee with disabled Login Credentials", async () => {
+  test("Creating Employee with disabled Login Credentials", async () => {
     await pm.pimPage.navigatetoPIMPage();
     await pm.pimPage.assertPIMPage();
     await pm.pimPage.validatePIMPagePath("PIM");
