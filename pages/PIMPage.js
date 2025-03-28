@@ -33,10 +33,25 @@ export default class PIMPage {
   async addEmployee(firstName, lastName, middleName, randomID) {
     await this.actions.fill("input[placeholder='First Name']", firstName);
     await this.actions.fill("input[placeholder='Last Name']", lastName);
-    await this.actions.fill("input[placeholder='Middle Name']", middleName);
+
+    if (middleName) {
+      await this.actions.fill("input[placeholder='Middle Name']", middleName);
+    }
+    // await this.actions.fill(
+    //   "div[class='oxd-input-group oxd-input-field-bottom-space'] div input[class='oxd-input oxd-input--active']",
+    //   randomID
+    // );
+
+    const existingValue = await this.page.inputValue(
+      "div[class='oxd-input-group oxd-input-field-bottom-space'] div input[class='oxd-input oxd-input--active']"
+    );
+    // Append the randomID to the existing value
+    const updatedValue = existingValue + randomID;
+
+    // Fill the input field with the updated value
     await this.actions.fill(
       "div[class='oxd-input-group oxd-input-field-bottom-space'] div input[class='oxd-input oxd-input--active']",
-      randomID
+      updatedValue
     );
   }
 
