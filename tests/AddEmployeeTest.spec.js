@@ -38,7 +38,7 @@ test.describe("Login Tests", () => {
   const userName = faker.internet.username();
   const passWord = faker.internet.password(7);
 
-  test.only("TC_CEF_001", async () => {
+  test("TC_CEF_001", async () => {
     console.log("TC_CEF_001");
 
     await pm.pimPage.navigatetoPIMPage();
