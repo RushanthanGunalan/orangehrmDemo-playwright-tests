@@ -42,17 +42,15 @@ export default class PIMPage {
     //   randomID
     // );
 
-    const existingValue = await this.page.inputValue(
-      "div[class='oxd-input-group oxd-input-field-bottom-space'] div input[class='oxd-input oxd-input--active']"
-    );
+    const employeeIdSelector =
+      "div[class='oxd-input-group oxd-input-field-bottom-space'] div input[class='oxd-input oxd-input--active']";
+    await this.actions.waitForVisible(employeeIdSelector);
+    const existingValue = await this.page.inputValue(employeeIdSelector);
     // Append the randomID to the existing value
     const updatedValue = existingValue + randomID;
 
     // Fill the input field with the updated value
-    await this.actions.fill(
-      "div[class='oxd-input-group oxd-input-field-bottom-space'] div input[class='oxd-input oxd-input--active']",
-      updatedValue
-    );
+    await this.actions.fill(employeeIdSelector, updatedValue);
   }
 
   async saveEmployeeDetails() {
@@ -90,11 +88,11 @@ export default class PIMPage {
   }
 
   async DisableLoginCredentialStatus(disable) {
-    if (disable) {
-      await this.page.locator("//label[normalize-space()='Disabled']").click();
-    } else {
-      await this.page.locator("//label[normalize-space()='Enabled']").click();
-    }
+    const statusLabel = disable
+      ? this.page.locator("//label[normalize-space()='Disabled']")
+      : this.page.locator("//label[normalize-space()='Enabled']");
+    // click() auto-waits for the label to be actionable.
+    await statusLabel.click();
   }
 
   async getProfileName() {

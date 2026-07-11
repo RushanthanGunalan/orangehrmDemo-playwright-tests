@@ -8,6 +8,7 @@ export default class AdminPage {
   }
 
   async navigateToAdminPage() {
+    // click() auto-waits for the menu item to be actionable.
     await this.page
       .locator("span.oxd-text.oxd-text--span.oxd-main-menu-item--name")
       .filter({ hasText: "Admin" })
