@@ -12,8 +12,16 @@ export type TopBarLocators = {
 
 export function topBarLocators(page: Page): TopBarLocators {
   return {
+    // A plain <p>, no semantic role of its own to key off - the class name
+    // is a specific, purpose-built design-system class (not a generic
+    // utility one reused elsewhere), so it's already about as stable as
+    // this element gets without a testid.
     profileDropdown: page.locator(".oxd-userdropdown-name"),
-    logoutLink: page.locator("//a[normalize-space()='Logout']"),
-    loginHeading: page.locator("//h5[normalize-space()='Login']"),
+    // Verified live: role="menuitem" on the real <a> - more stable than
+    // the previous XPath text match.
+    logoutLink: page.getByRole("menuitem", { name: "Logout", exact: true }),
+    // Verified live: the only <h5> on the login page, semantic role and
+    // level both real (not just visual text) - more stable than XPath.
+    loginHeading: page.getByRole("heading", { name: "Login", level: 5 }),
   };
 }

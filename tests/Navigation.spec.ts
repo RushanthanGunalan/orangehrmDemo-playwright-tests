@@ -13,7 +13,7 @@ test.describe("Navigation To Specific Pages from Side Panel", () => {
     await pm.loginPage.assertLoginValidation("Dashboard");
   });
 
-  test("Navigating to Admin Page", async () => {
+  test("TC_NAV_001: Verify Navigation To Admin Page From Side Panel", async () => {
     await pm.adminPage.navigateToAdminPage();
     await pm.adminPage.assertAdminPage();
     await pm.adminPage.validateAdminPageIsLoaded("Admin");

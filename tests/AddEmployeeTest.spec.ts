@@ -14,7 +14,7 @@ test.describe("Login Tests", () => {
     await pm.loginPage.assertLoginValidation("Dashboard");
   });
 
-  test("TC_CEF_001", async () => {
+  test("TC_CEF_001: Add Employee Without Middle Name", async () => {
     console.log("TC_CEF_001");
     const firstName = faker.person.fullName();
     const lastName = faker.person.lastName();
@@ -30,7 +30,7 @@ test.describe("Login Tests", () => {
     await pm.pimPage.validateAddedEmployeeDetails(firstName, lastName);
   });
 
-  test("TC_CEF_002", async () => {
+  test("TC_CEF_002: Add Employee With Middle Name", async () => {
     console.log("TC_CEF_002");
     const firstName = faker.person.fullName();
     const lastName = faker.person.lastName();
@@ -47,8 +47,8 @@ test.describe("Login Tests", () => {
     await pm.pimPage.validateAddedEmployeeDetails(firstName, lastName);
   });
 
-  test("Creating Employee with Login Credentials", async () => {
-    console.log("Test 2");
+  test("TC_CEF_003: Create Employee With Enabled Login Credentials", async () => {
+    console.log("TC_CEF_003");
     // Unique data per test - a shared username across tests risks a
     // duplicate-username collision with whatever another test in this same
     // file just created (this collision is exactly what was causing the
@@ -74,8 +74,8 @@ test.describe("Login Tests", () => {
     await pm.pimPage.assertCreatedEmployeeCredential(firstName, lastName);
   });
 
-  test("Creating Employee with disabled Login Credentials", async () => {
-    console.log("Test 3");
+  test("TC_CEF_004: Create Employee With Disabled Login Credentials", async () => {
+    console.log("TC_CEF_004");
     const firstName = faker.person.fullName();
     const lastName = faker.person.lastName();
     const middleName = faker.person.middleName();

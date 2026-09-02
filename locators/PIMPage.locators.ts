@@ -1,5 +1,20 @@
 import { Page, Locator } from "@playwright/test";
 import { sidebarNavLocators } from "./components/sidebarNav.locators";
+import { topBarLocators } from "./components/topBar.locators";
+
+/**
+ * The Add Employee form's inputs have no name/id/placeholder at all
+ * (verified live) except firstName/lastName/middleName - each one only has
+ * a nearby <label> for a human to read. This anchors on that label text
+ * instead of position, which is what the old nth-child chain was really
+ * trying (and failing) to do.
+ */
+function inputGroupByLabel(page: Page, labelText: string | RegExp): Locator {
+  return page
+    .locator(".oxd-input-group")
+    .filter({ has: page.locator("label", { hasText: labelText }) })
+    .locator("input");
+}
 
 export type PIMPageLocators = {
   breadcrumbHeading: Locator;
@@ -26,39 +41,39 @@ export function pimPageLocators(page: Page): PIMPageLocators {
     breadcrumbHeading: page.locator(
       ".oxd-text.oxd-text--h6.oxd-topbar-header-breadcrumb-module",
     ),
-    addButton: page.locator(
-      "button[class='oxd-button oxd-button--medium oxd-button--secondary']",
-    ),
-    firstNameInput: page.locator("input[placeholder='First Name']"),
-    lastNameInput: page.locator("input[placeholder='Last Name']"),
-    middleNameInput: page.locator("input[placeholder='Middle Name']"),
-    employeeIdInput: page.locator(
-      "div[class='oxd-input-group oxd-input-field-bottom-space'] div input[class='oxd-input oxd-input--active']",
-    ),
+    // Verified live: the only button with accessible name "Add" on the PIM
+    // Employee List page - role-based, no dependency on the exact class
+    // string (the old selector broke on any class reordering/addition).
+    // Not exact: the button's icon precedes the text in the DOM, so its
+    // real computed accessible name is " Add" (leading space) - confirmed
+    // by an actual failed run, not just reasoning about the markup.
+    addButton: page.getByRole("button", { name: "Add" }),
+    // Verified live: real name="firstName"/"lastName"/"middleName" form
+    // attributes - more stable than placeholder display text.
+    firstNameInput: page.locator("input[name='firstName']"),
+    lastNameInput: page.locator("input[name='lastName']"),
+    middleNameInput: page.locator("input[name='middleName']"),
+    // Verified live: this input has no name/id/placeholder whatsoever -
+    // the nearby "Employee Id" label is the only stable hook available.
+    employeeIdInput: inputGroupByLabel(page, "Employee Id"),
     submitButton: page.locator("button[type='submit']"),
     addedEmployeeHeading: page.locator(".oxd-text.oxd-text--h6.--strong"),
+    // Verified live: the only switch on this form.
     loginDetailsToggle: page.locator("div.oxd-switch-wrapper"),
-    /**
-     * Brittle: a deep nth-child chain with no id/testid/placeholder to key
-     * off - it's the only selector in this suite that isn't at least a
-     * stable attribute or filtered text match. Kept exactly as-is (a
-     * behavior change here needs verifying against the live app first),
-     * flagged for whoever next touches this page - if the Add Employee
-     * form's login-credentials username field ever gets a `name` or
-     * `data-testid` attribute, replace this.
-     */
-    loginUsernameInput: page.locator(
-      "body > div:nth-child(3) > div:nth-child(1) > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > form:nth-child(3) > div:nth-child(1) > div:nth-child(2) > div:nth-child(4) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > input:nth-child(1)",
-    ),
-    loginPasswordInput: page.locator(
-      "div[class='oxd-grid-item oxd-grid-item--gutters user-password-cell'] div[class='oxd-input-group oxd-input-field-bottom-space'] div input[type='password']",
-    ),
-    loginConfirmPasswordInput: page.locator(
-      "div[class='oxd-grid-item oxd-grid-item--gutters'] div[class='oxd-input-group oxd-input-field-bottom-space'] div input[type='password']",
-    ),
+    // Verified live: none of the three fields below (username, password,
+    // confirm password) have a name/id/placeholder either - same
+    // label-anchoring approach as employeeIdInput. Password needs an
+    // exact-match regex, not a plain substring, since "Password" is itself
+    // a substring of "Confirm Password" - a plain hasText: "Password"
+    // would match both input groups and make the locator ambiguous.
+    loginUsernameInput: inputGroupByLabel(page, "Username"),
+    loginPasswordInput: inputGroupByLabel(page, /^Password$/),
+    loginConfirmPasswordInput: inputGroupByLabel(page, "Confirm Password"),
     disabledStatusLabel: page.locator("//label[normalize-space()='Disabled']"),
     enabledStatusLabel: page.locator("//label[normalize-space()='Enabled']"),
-    profileName: page.locator(".oxd-userdropdown-name"),
+    // Same element as topBar.locators.ts's profileDropdown - reuse it
+    // rather than maintaining the same selector in two places.
+    profileName: topBarLocators(page).profileDropdown,
     loginErrorMessage: page.locator(
       ".oxd-text.oxd-text--p.oxd-alert-content-text",
     ),

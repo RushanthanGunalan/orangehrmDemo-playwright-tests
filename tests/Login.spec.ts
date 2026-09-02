@@ -9,7 +9,7 @@ test.describe("Login Tests", () => {
     pm = new PomManager(page);
   });
 
-  test("Logging in with Correct Credentials", async () => {
+  test("TC_LOGIN_001: Verify Successful Login With Valid Credentials", async () => {
     const admin = getAdminCredentials();
     await pm.loginPage.navigate();
     await pm.loginPage.login(admin.username, admin.password);

@@ -57,9 +57,11 @@ export type LoginPageLocators = {
 
 export function loginPageLocators(page: Page): LoginPageLocators {
   return {
-    usernameInput: page.locator("input[placeholder='Username']"),
-    passwordInput: page.locator("input[placeholder='Password']"),
-    submitButton: page.locator("button[type='submit']"),
+    // name="username"/"password" verified live - more stable than
+    // placeholder text, which is just display copy.
+    usernameInput: page.locator("input[name='username']"),
+    passwordInput: page.locator("input[name='password']"),
+    submitButton: page.getByRole("button", { name: "Login", exact: true }),
   };
 }
 ```
@@ -84,7 +86,16 @@ export default class LoginPage {
 
 Elements that appear on more than one page (the side nav, the top-bar profile menu) get their own file under `locators/components/` instead of being copy-pasted into every page that uses them - `AdminPage` and `PIMPage` both navigate via `locators/components/sidebarNav.locators.ts`'s `menuItemByName(name)` rather than each re-implementing the same selector.
 
-**One known brittle locator, flagged rather than silently left:** `PIMPage.locators.ts`'s `loginUsernameInput` is a deep `nth-child` chain with no id/testid/placeholder to key off - the only selector in this suite that isn't at least a stable attribute or a filtered text match. It's called out with a comment at its definition. If the Add Employee form's login-credentials username field ever gets a `name` or `data-testid` attribute, replace it - until then, changing it needs verifying against the live app first, so it was left exactly as it worked.
+### Locator stability audit
+
+Every locator in this suite was checked live against the running app (DOM attributes, ARIA roles, accessible names) rather than assumed stable from how it looked. Priority order, most to least preferred: a real `name`/`id` form attribute > ARIA role + accessible name (`getByRole`) > a purpose-built, non-generic CSS class > label-text anchoring > raw XPath/positional selectors as a last resort.
+
+What changed as a result:
+- **Sidebar nav items** (`sidebarNav.locators.ts`) and the **logout link**/**login heading** (`topBar.locators.ts`) were CSS-class-and-text-filter or XPath - verified live that these are real `<a>`/`<h5>` elements with genuine `role="link"`/`role="menuitem"`/heading roles and accessible names, so they're now `getByRole(...)` instead.
+- **Login/employee name fields** were matched on placeholder text (display copy, not guaranteed stable) - verified live that `name="username"`/`"firstName"`/`"lastName"`/`"middleName"` attributes exist, so they're now attribute-matched instead.
+- **The "Add" button** was an exact-string class match (`button[class='oxd-button oxd-button--medium oxd-button--secondary']`) - breaks if the class list is ever reordered or extended. Verified live it has accessible name "Add" via its own visible text, so it's now `getByRole("button", { name: "Add" })`.
+- **The Employee ID field and the three login-credential fields** (username/password/confirm password on the Add Employee form) genuinely have **no** name/id/placeholder at all - verified live, this isn't an oversight to fix by picking a better attribute, there isn't one. The old `loginUsernameInput` selector was a 15-level-deep `nth-child` chain that would break on any layout change with zero warning. All four now anchor on their nearby `<label>` text instead (`inputGroupByLabel()` in `PIMPage.locators.ts`) - still not as strong as a real attribute, but tied to human-readable label text instead of raw DOM position, and verified to resolve to exactly one element each (the "Password" match needs an exact regex, not a substring, since "Confirm Password" would otherwise also match).
+- **Two locators were kept as-is on purpose after verification**, not out of neglect: the breadcrumb heading's CSS class (verified live there are 2 `<h6>`s on some pages, so a generic role-based heading locator would be ambiguous - the specific class is actually the safer choice here) and `profileName`/`profileDropdown`'s CSS class (a plain `<p>` with no semantic role to key off - this class is already the most stable option available). `profileName` in `PIMPage.locators.ts` was also deduplicated to reuse `topBar.locators.ts`'s `profileDropdown` instead of maintaining an identical selector in two places.
 
 ## 5. Configuration & credentials
 
@@ -105,9 +116,14 @@ Elements that appear on more than one page (the side nav, the top-bar profile me
 
 `.github/workflows/playwright.yml` runs the full suite on every push and pull request to `main`/`master`: checks out, enables corepack (so pnpm resolves to the exact version pinned in `package.json`'s `packageManager` field), installs dependencies (`pnpm install --frozen-lockfile`), installs Chromium with its OS dependencies, runs the suite, and uploads the HTML report as a build artifact. No secrets are required - the credential fallback in §5 means CI works out of the box against the public demo instance.
 
-## 8. Extending the suite
+## 8. Test naming
 
-1. Add or extend the relevant `*.locators.ts` file (or a `components/` one, if it's shared) for any new element.
+Every test title is `"<Test ID>: <Test Case Title>"` - e.g. `"TC_CEF_001: Add Employee Without Middle Name"` - so a test is identifiable by ID alone (for cross-referencing a test plan, a bug report, a CI failure notification) while the title still reads clearly on its own in the HTML report or terminal output. IDs are grouped by feature area with a numeric suffix: `TC_LOGIN_*`, `TC_NAV_*`, `TC_CEF_*` ("Create Employee Form"). Give a new test the next number in whichever prefix it belongs to, or a new prefix if it's a new feature area.
+
+## 9. Extending the suite
+
+1. Add or extend the relevant `*.locators.ts` file (or a `components/` one, if it's shared) for any new element - see §4's stability priority order before picking a selector.
 2. Add or extend the Page Object method that uses it - never a raw selector in a test.
 3. Verify the case against the live app first, not just an assumption of what it should do.
-4. Never hardcode a credential in a spec - go through `src/config/credentials.ts` (see §5 for why this project's default isn't a throw).
+4. Title the test `"<Test ID>: <Test Case Title>"` (see §8).
+5. Never hardcode a credential in a spec - go through `src/config/credentials.ts` (see §5 for why this project's default isn't a throw).

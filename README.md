@@ -23,14 +23,6 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 - **HTML reporting** — rich Playwright HTML reports with traces captured on retry.
 - **CI** — GitHub Actions runs the full suite on every push/PR (see `.github/workflows/playwright.yml`).
 
-## 🧪 Test Coverage
-
-| Spec                            | Scenario                                                                                                                                                                                                             |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/Login.spec.ts`           | Logging in with valid credentials and asserting the Dashboard loads                                                                                                                                                  |
-| `tests/Navigation.spec.ts`      | Navigating to the Admin page from the side panel and validating the route                                                                                                                                            |
-| `tests/AddEmployeeTest.spec.ts` | Adding an employee (with/without middle name); creating an employee **with** login credentials and logging in as them; creating an employee with **disabled** credentials and asserting the "Account disabled" error |
-
 ## 🛠️ Tech Stack
 
 - **[Playwright Test](https://playwright.dev/)** — test runner & browser automation (Chromium project enabled)
@@ -114,7 +106,7 @@ Run a single spec or test:
 
 ```bash
 pnpm exec playwright test tests/Login.spec.ts
-pnpm exec playwright test -g "Logging in with Correct Credentials"
+pnpm exec playwright test -g "TC_LOGIN_001"
 ```
 
 ## 🔐 Security Notes
