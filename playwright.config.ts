@@ -1,33 +1,51 @@
-// @ts-check
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
+import { config } from "./src/config/config";
 
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
+ *
+ * No explicit path - dotenv defaults to reading .env from process.cwd(),
+ * which is always this project's root since that's where
+ * playwright.config.ts lives and where `pnpm test` /
+ * `pnpm exec playwright test` are always run from.
  */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
+dotenv.config();
 
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
   testDir: "./tests",
+  /* Default 30s is too tight for the PIM flows - they already include a
+   * hardcoded page.waitForTimeout(10000) after saving an employee, on top
+   * of real navigation/network time, and were bumping into the default
+   * budget even before this restructuring. */
+  timeout: 60000,
   /* Run tests in files in parallel */
   fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* `fullyParallel: false` above already means tests within one file never
+   * run concurrently - but without pinning workers too, Playwright still
+   * runs *different* files on separate workers at once by default, so
+   * Login/Navigation/AddEmployeeTest ended up hitting the same shared
+   * public demo server simultaneously and caused a real, reproduced click
+   * to hang until timeout under that concurrent load. Serializing
+   * everything to one worker (not just on CI) matches what `fullyParallel:
+   * false` was already going for. */
+  workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://127.0.0.1:3000',
+    /* Base URL to use in actions like `await page.goto('/')`. Sourced from
+     * src/config/config.ts (BASE_URL env var, falls back to the public
+     * OrangeHRM demo instance) - see that file for why it's a getter. */
+    baseURL: config.baseUrl,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",

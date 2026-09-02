@@ -1,0 +1,113 @@
+# Architecture
+
+## 1. What this repo is
+
+A small Playwright + TypeScript regression suite against the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) - login, side-panel navigation, and the PIM "Add Employee" flow (including login-credential creation and account-status checks). 6 tests across 3 spec files. See [README.md](README.md) for day-to-day commands.
+
+This is a portfolio-scale project, not an enterprise QA suite - so unlike larger Playwright repos you might see the same author work on, there's deliberately no QA-Type taxonomy, no Discord notification pipeline, and no tracking spreadsheet here. Just the parts that earn their keep at this size: a clean Locator Library split and credentials out of source.
+
+## 2. High-level architecture
+
+```
+tests/*.spec.ts  --uses-->  src/pages/*.ts (Page Objects: behavior)
+                                    |
+                                    v
+                          locators/*.locators.ts (raw selectors only)
+```
+
+A test never touches a raw selector. A Page Object never hardcodes a selector inline - it holds a `locators` object built by a factory function in `locators/`. Tests reach the Page Objects through `PomManager`, one object aggregating every page, rather than each test constructing several Page Objects individually.
+
+## 3. Folder structure
+
+```
+locators/
+  LoginPage.locators.ts         one factory per page - see §4
+  AdminPage.locators.ts
+  PIMPage.locators.ts
+  components/
+    sidebarNav.locators.ts       shared - the left nav menu, used by Admin + PIM
+    topBar.locators.ts           shared - profile dropdown / logout / login heading
+src/
+  config/
+    config.ts                    baseUrl (env-overridable getter), timeout
+    credentials.ts                credential getters, read .env
+  pages/
+    PomManager.ts                 aggregates every Page Object - tests use this
+    LoginPage.ts / AdminPage.ts / PIMPage.ts
+utils/
+  commonActions.ts                shared interaction wrappers (locator-based)
+tests/
+  Login.spec.ts / Navigation.spec.ts / AddEmployeeTest.spec.ts
+.github/workflows/playwright.yml  CI - see §7
+playwright.config.ts
+tsconfig.json                    TypeScript compiler config
+```
+
+## 4. The Locator Library - how locators are managed
+
+Every locator lives in `locators/*.locators.ts` as a factory function taking `page` and returning a plain object of Locators:
+
+```ts
+// locators/LoginPage.locators.ts
+export type LoginPageLocators = {
+  usernameInput: Locator;
+  passwordInput: Locator;
+  submitButton: Locator;
+};
+
+export function loginPageLocators(page: Page): LoginPageLocators {
+  return {
+    usernameInput: page.locator("input[placeholder='Username']"),
+    passwordInput: page.locator("input[placeholder='Password']"),
+    submitButton: page.locator("button[type='submit']"),
+  };
+}
+```
+
+The matching Page Object holds that object under a single `locators` property and contains *only* behavior:
+
+```ts
+// src/pages/LoginPage.ts
+export default class LoginPage {
+  readonly locators: LoginPageLocators;
+
+  constructor(page: Page) {
+    this.locators = loginPageLocators(page);
+  }
+  async login(userName: string, passWord: string) {
+    await this.locators.usernameInput.fill(userName);
+    await this.locators.passwordInput.fill(passWord);
+    await this.locators.submitButton.click();
+  }
+}
+```
+
+Elements that appear on more than one page (the side nav, the top-bar profile menu) get their own file under `locators/components/` instead of being copy-pasted into every page that uses them - `AdminPage` and `PIMPage` both navigate via `locators/components/sidebarNav.locators.ts`'s `menuItemByName(name)` rather than each re-implementing the same selector.
+
+**One known brittle locator, flagged rather than silently left:** `PIMPage.locators.ts`'s `loginUsernameInput` is a deep `nth-child` chain with no id/testid/placeholder to key off - the only selector in this suite that isn't at least a stable attribute or a filtered text match. It's called out with a comment at its definition. If the Add Employee form's login-credentials username field ever gets a `name` or `data-testid` attribute, replace it - until then, changing it needs verifying against the live app first, so it was left exactly as it worked.
+
+## 5. Configuration & credentials
+
+| File | Committed? | Contains |
+|---|---|---|
+| `src/config/config.ts` | Yes | `baseUrl` (env-overridable via `BASE_URL`), `timeout` - no secrets |
+| `.env.example` | Yes | Template naming the optional override env vars |
+| `.env` | No (gitignored) | Local overrides, if you use any |
+| `src/config/credentials.ts` | Yes | Credential getters reading `.env` |
+
+**This project's credentials are a genuine exception to "never hardcode a credential."** OrangeHRM publishes `Admin` / `admin123` itself as the public demo login - see https://opensource-demo.orangehrmlive.com/. They're not a secret in any real sense, so `getAdminCredentials()` falls back to that published value when `ADMIN_USERNAME`/`ADMIN_PASSWORD` aren't set, rather than throwing like a real internal app's credentials getter would. The env-var path still exists (and still wins when set) so the suite can point at a different OrangeHRM instance without touching source - just don't read the fallback here as license to hardcode credentials in a project where they'd actually be sensitive.
+
+## 6. Reading a red test
+
+`AddEmployeeTest.spec.ts` uses fixed `page.waitForTimeout(...)` sleeps (5-10s) after form submission rather than an explicit wait on the resulting state - this predates the Locator Library pass and wasn't touched during it (the ask was to restructure, not rewrite test logic). If these specs get flaky, that's the first place to look: replace the sleep with an explicit `expect(locator).toBeVisible()` on whatever confirms the save actually completed.
+
+## 7. CI
+
+`.github/workflows/playwright.yml` runs the full suite on every push and pull request to `main`/`master`: checks out, enables corepack (so pnpm resolves to the exact version pinned in `package.json`'s `packageManager` field), installs dependencies (`pnpm install --frozen-lockfile`), installs Chromium with its OS dependencies, runs the suite, and uploads the HTML report as a build artifact. No secrets are required - the credential fallback in §5 means CI works out of the box against the public demo instance.
+
+## 8. Extending the suite
+
+1. Add or extend the relevant `*.locators.ts` file (or a `components/` one, if it's shared) for any new element.
+2. Add or extend the Page Object method that uses it - never a raw selector in a test.
+3. Verify the case against the live app first, not just an assumption of what it should do.
+4. Never hardcode a credential in a spec - go through `src/config/credentials.ts` (see §5 for why this project's default isn't a throw).

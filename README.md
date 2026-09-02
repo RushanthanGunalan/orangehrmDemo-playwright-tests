@@ -4,7 +4,7 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 
 <p>
   <img alt="Playwright" src="https://img.shields.io/badge/Playwright-2EAD33?logo=playwright&logoColor=white">
-  <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white">
   <img alt="pnpm" src="https://img.shields.io/badge/pnpm-F69220?logo=pnpm&logoColor=white">
   <img alt="Node.js" src="https://img.shields.io/badge/Node.js-5FA04E?logo=node.js&logoColor=white">
 </p>
@@ -13,25 +13,28 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 
 ## ✨ Highlights
 
-- **Page Object Model** — every page is a class exposing intent-revealing actions, kept separate from test logic.
+- **Locator Library + Page Object Model** — every raw selector lives in `locators/*.locators.ts`, kept separate from the Page Objects (`src/pages/`) that hold the actual behavior. See [ARCHITECTURE.md](ARCHITECTURE.md) for the full pattern.
+- **TypeScript throughout** — Locators, Page Objects, and config are fully typed; `tsc --noEmit` runs clean and has already caught one real bug (a `faker` API misuse that was silently generating passwords with the wrong length).
 - **`PomManager`** — a single entry point that wires up all page objects, so tests instantiate one manager instead of many pages.
-- **`CommonActions` wrapper** — shared, reusable Playwright interactions (`click`, `fill`, `getText`, …) so selectors and waiting logic live in one place.
+- **`CommonActions` wrapper** — shared, reusable Playwright interactions (`getText`, `waitForVisible`, `navigateSidePanel`, …) operating on Locator objects, so waiting logic lives in one place.
 - **Web-first waiting** — reads/verifications go through auto-retrying `expect(locator).toBeVisible()`; actions rely on Playwright's built-in auto-waiting (no brittle fixed sleeps in the page layer).
+- **Credentials & base URL via `.env`** — nothing hardcoded in source; see [Configuration](#-configuration) below.
 - **Dynamic test data** — [`@faker-js/faker`](https://fakerjs.dev/) generates unique employee names, IDs, and credentials per run.
 - **HTML reporting** — rich Playwright HTML reports with traces captured on retry.
+- **CI** — GitHub Actions runs the full suite on every push/PR (see `.github/workflows/playwright.yml`).
 
 ## 🧪 Test Coverage
 
 | Spec                            | Scenario                                                                                                                                                                                                             |
 | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/Login.spec.js`           | Logging in with valid credentials and asserting the Dashboard loads                                                                                                                                                  |
-| `tests/Navigation.spec.js`      | Navigating to the Admin page from the side panel and validating the route                                                                                                                                            |
-| `tests/AddEmployeeTest.spec.js` | Adding an employee (with/without middle name); creating an employee **with** login credentials and logging in as them; creating an employee with **disabled** credentials and asserting the "Account disabled" error |
+| `tests/Login.spec.ts`           | Logging in with valid credentials and asserting the Dashboard loads                                                                                                                                                  |
+| `tests/Navigation.spec.ts`      | Navigating to the Admin page from the side panel and validating the route                                                                                                                                            |
+| `tests/AddEmployeeTest.spec.ts` | Adding an employee (with/without middle name); creating an employee **with** login credentials and logging in as them; creating an employee with **disabled** credentials and asserting the "Account disabled" error |
 
 ## 🛠️ Tech Stack
 
 - **[Playwright Test](https://playwright.dev/)** — test runner & browser automation (Chromium project enabled)
-- **JavaScript (ES Modules)**
+- **TypeScript**
 - **[@faker-js/faker](https://fakerjs.dev/)** — test data generation
 - **[pnpm](https://pnpm.io/)** — fast, disk-efficient package manager (see [Security](#-security-notes))
 
@@ -39,23 +42,38 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 
 ```
 .
-├── pages/                 # Page Object Model classes
-│   ├── PomManager.js      # Aggregates all page objects (single entry point)
-│   ├── LoginPage.js       # Login flow + validation
-│   ├── AdminPage.js       # Admin page navigation & assertions
-│   └── PIMPage.js         # PIM: add employee, credentials, status checks
+├── locators/               # Locator Library - raw selectors only, nothing else
+│   ├── LoginPage.locators.ts
+│   ├── AdminPage.locators.ts
+│   ├── PIMPage.locators.ts
+│   └── components/          # shared elements reused across pages
+│       ├── sidebarNav.locators.ts
+│       └── topBar.locators.ts
+├── src/
+│   ├── config/
+│   │   ├── config.ts         # baseUrl (env-overridable), timeout - no secrets
+│   │   └── credentials.ts    # credential getters, reads .env
+│   └── pages/                # Page Object Model - behavior only
+│       ├── PomManager.ts      # Aggregates all page objects (single entry point)
+│       ├── LoginPage.ts       # Login flow + validation
+│       ├── AdminPage.ts       # Admin page navigation & assertions
+│       └── PIMPage.ts         # PIM: add employee, credentials, status checks
 ├── utils/
-│   └── commonActions.js   # Reusable Playwright interaction wrappers
+│   └── commonActions.ts   # Reusable Playwright interaction wrappers (locator-based)
 ├── tests/                 # Test specs
-│   ├── Login.spec.js
-│   ├── Navigation.spec.js
-│   └── AddEmployeeTest.spec.js
-├── playwright.config.js   # Playwright configuration
+│   ├── Login.spec.ts
+│   ├── Navigation.spec.ts
+│   └── AddEmployeeTest.spec.ts
+├── .github/workflows/      # CI
+├── playwright.config.ts   # Playwright configuration
+├── tsconfig.json          # TypeScript compiler config
+├── .env.example           # template for local overrides (see Configuration)
 ├── .npmrc                 # pnpm settings (supply-chain cooldown)
 └── package.json
 ```
 
-<!--
+See [ARCHITECTURE.md](ARCHITECTURE.md) for why it's split this way.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -72,9 +90,15 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 ### Installation
 
 ```bash
-pnpm install              # install dependencies
-pnpm exec playwright install   # download the Playwright browser binaries
+pnpm install                    # install dependencies
+pnpm exec playwright install    # download the Playwright browser binaries
 ```
+
+### Configuration
+
+Nothing is required to get running — `src/config/credentials.ts` and `src/config/config.ts` fall back to OrangeHRM's own published public demo login (`Admin` / `admin123`) and the public demo instance if no `.env` is present, since those aren't actually secrets (OrangeHRM publishes them itself for anyone to use).
+
+If you want to point the suite at a different OrangeHRM instance or account, copy `.env.example` to `.env` and fill in `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and/or `BASE_URL`. `.env` is gitignored either way.
 
 ### Running the tests
 
@@ -89,7 +113,7 @@ pnpm report          # open the last HTML report
 Run a single spec or test:
 
 ```bash
-pnpm exec playwright test tests/Login.spec.js
+pnpm exec playwright test tests/Login.spec.ts
 pnpm exec playwright test -g "Logging in with Correct Credentials"
 ```
 
@@ -115,7 +139,4 @@ Traces are collected on the first retry (`trace: "on-first-retry"`) and can be e
 
 ---
 
-> **App under test:** OrangeHRM open-source demo — https://opensource-demo.orangehrmlive.com/ (default credentials `Admin` / `admin123`). This is a public demo environment used purely for learning and portfolio purposes.
-
-
--->
+> **App under test:** OrangeHRM open-source demo — https://opensource-demo.orangehrmlive.com/ (default credentials `Admin` / `admin123`, published by OrangeHRM itself). This is a public demo environment used purely for learning and portfolio purposes.

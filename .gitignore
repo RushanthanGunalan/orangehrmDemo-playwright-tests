@@ -5,3 +5,9 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Environment variables - .env isn't strictly required here (the demo
+# credentials have safe public fallbacks, see src/config/credentials.ts),
+# but keep it out of git regardless in case it's ever used to point at a
+# non-public OrangeHRM instance.
+.env

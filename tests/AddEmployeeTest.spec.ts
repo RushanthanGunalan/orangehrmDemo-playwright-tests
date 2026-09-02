@@ -1,45 +1,24 @@
-import PomManager from "../pages/PomManager";
+import PomManager from "../src/pages/PomManager";
 import { faker } from "@faker-js/faker";
-import { Page, chromium, expect, test, close } from "@playwright/test";
-import CommonActions from "../utils/commonActions";
-import PIMPage from "./../pages/PIMPage";
-import LoginPage from "./../pages/LoginPage";
+import { test } from "@playwright/test";
+import { getAdminCredentials } from "../src/config/credentials";
 
-let browserContext;
-let pm;
+let pm: PomManager;
 
 test.describe("Login Tests", () => {
-  // test.beforeAll(async () => {
-  //   console.log("Test Class Started for all tests");
-  //   const browser = await chromium.launch();
-  //   browserContext = await browser.newContext();
-  //   const page = await browserContext.newPage();
-  //   pm = new PomManager(page);
-  //   await pm.loginPage.navigate();
-  //   await pm.loginPage.login("Admin", "admin123");
-  //   await pm.loginPage.assertLoginValidation("Dashboard");
-  // });
-
   test.beforeEach(async ({ page }) => {
+    const admin = getAdminCredentials();
     pm = new PomManager(page);
     await pm.loginPage.navigate();
-    await pm.loginPage.login("Admin", "admin123");
+    await pm.loginPage.login(admin.username, admin.password);
     await pm.loginPage.assertLoginValidation("Dashboard");
   });
 
-  test.afterEach(async ({ page }) => {
-    await page.close();
-  });
-
-  const firstName = faker.person.fullName();
-  const lastName = faker.person.lastName();
-  const middleName = faker.person.middleName();
-  const randomID = faker.string.alphanumeric(3);
-  const userName = faker.internet.username();
-  const passWord = faker.internet.password(7);
-
   test("TC_CEF_001", async () => {
     console.log("TC_CEF_001");
+    const firstName = faker.person.fullName();
+    const lastName = faker.person.lastName();
+    const randomID = faker.string.alphanumeric(3);
 
     await pm.pimPage.navigatetoPIMPage();
     await pm.pimPage.assertPIMPage();
@@ -53,6 +32,10 @@ test.describe("Login Tests", () => {
 
   test("TC_CEF_002", async () => {
     console.log("TC_CEF_002");
+    const firstName = faker.person.fullName();
+    const lastName = faker.person.lastName();
+    const middleName = faker.person.middleName();
+    const randomID = faker.string.alphanumeric(3);
 
     await pm.pimPage.navigatetoPIMPage();
     await pm.pimPage.assertPIMPage();
@@ -66,6 +49,17 @@ test.describe("Login Tests", () => {
 
   test("Creating Employee with Login Credentials", async () => {
     console.log("Test 2");
+    // Unique data per test - a shared username across tests risks a
+    // duplicate-username collision with whatever another test in this same
+    // file just created (this collision is exactly what was causing the
+    // next test to log into THIS test's account instead of its own).
+    const firstName = faker.person.fullName();
+    const lastName = faker.person.lastName();
+    const middleName = faker.person.middleName();
+    const randomID = faker.string.alphanumeric(3);
+    const userName = faker.internet.username();
+    const passWord = faker.internet.password({ length: 7 });
+
     await pm.pimPage.navigatetoPIMPage();
     await pm.pimPage.assertPIMPage();
     await pm.pimPage.validatePIMPagePath("PIM");
@@ -82,6 +76,13 @@ test.describe("Login Tests", () => {
 
   test("Creating Employee with disabled Login Credentials", async () => {
     console.log("Test 3");
+    const firstName = faker.person.fullName();
+    const lastName = faker.person.lastName();
+    const middleName = faker.person.middleName();
+    const randomID = faker.string.alphanumeric(3);
+    const userName = faker.internet.username();
+    const passWord = faker.internet.password({ length: 7 });
+
     await pm.pimPage.navigatetoPIMPage();
     await pm.pimPage.assertPIMPage();
     await pm.pimPage.validatePIMPagePath("PIM");
