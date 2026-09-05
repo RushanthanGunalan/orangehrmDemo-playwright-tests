@@ -1,6 +1,6 @@
 # OrangeHRM UI Automation — Playwright
 
-End-to-end UI test automation for the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) built with **Playwright** and the **Page Object Model (POM)**. The suite covers authentication, side-panel navigation, and the PIM "Add Employee" workflows (including login-credential creation and account-status validation).
+End-to-end UI test automation for the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) built with **Playwright** and the **Page Object Model (POM)**. The suite covers authentication, side-panel navigation, and the PIM "Add Employee" and "Edit Employee" workflows (including login-credential creation and account-status validation).
 
 <p>
   <img alt="Playwright" src="https://img.shields.io/badge/Playwright-2EAD33?logo=playwright&logoColor=white">
@@ -38,6 +38,7 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 │   ├── LoginPage.locators.ts
 │   ├── AdminPage.locators.ts
 │   ├── PIMPage.locators.ts
+│   ├── EmployeePersonalDetailsPage.locators.ts
 │   └── components/          # shared elements reused across pages
 │       ├── sidebarNav.locators.ts
 │       └── topBar.locators.ts
@@ -49,13 +50,15 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 │       ├── PomManager.ts      # Aggregates all page objects (single entry point)
 │       ├── LoginPage.ts       # Login flow + validation
 │       ├── AdminPage.ts       # Admin page navigation & assertions
-│       └── PIMPage.ts         # PIM: add employee, credentials, status checks
+│       ├── PIMPage.ts         # PIM: add employee, credentials, status checks
+│       └── EmployeePersonalDetailsPage.ts   # Edit an employee's name fields
 ├── utils/
 │   └── commonActions.ts   # Reusable Playwright interaction wrappers (locator-based)
 ├── tests/                 # Test specs
 │   ├── Login.spec.ts
 │   ├── Navigation.spec.ts
-│   └── AddEmployeeTest.spec.ts
+│   ├── AddEmployeeTest.spec.ts
+│   └── EditEmployeeTest.spec.ts
 ├── .github/workflows/      # CI
 ├── playwright.config.ts   # Playwright configuration
 ├── tsconfig.json          # TypeScript compiler config
