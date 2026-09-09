@@ -2,7 +2,7 @@
 
 ## 1. What this repo is
 
-A small Playwright + TypeScript regression suite against the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) - login, side-panel navigation, and the PIM "Add Employee" and "Edit Employee" flows (including login-credential creation and account-status checks). 7 tests across 4 spec files. See [README.md](README.md) for day-to-day commands.
+A small Playwright + TypeScript regression suite against the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) - login, side-panel navigation, and the PIM "Add Employee", "Edit Employee", and "Delete Employee" flows (including login-credential creation and account-status checks). 8 tests across 5 spec files. See [README.md](README.md) for day-to-day commands.
 
 This is a portfolio-scale project, not an enterprise QA suite - so unlike larger Playwright repos you might see the same author work on, there's deliberately no QA-Type taxonomy, no Discord notification pipeline, and no tracking spreadsheet here. Just the parts that earn their keep at this size: a clean Locator Library split and credentials out of source.
 
@@ -28,6 +28,7 @@ locators/
   components/
     sidebarNav.locators.ts       shared - the left nav menu, used by Admin + PIM
     topBar.locators.ts           shared - profile dropdown / logout / login heading
+    toast.locators.ts            shared - the success toast, used by Edit + Delete
 src/
   config/
     config.ts                    baseUrl (env-overridable getter), timeout
@@ -38,7 +39,8 @@ src/
 utils/
   commonActions.ts                shared interaction wrappers (locator-based)
 tests/
-  Login.spec.ts / Navigation.spec.ts / AddEmployeeTest.spec.ts / EditEmployeeTest.spec.ts
+  Login.spec.ts / Navigation.spec.ts / AddEmployeeTest.spec.ts
+  EditEmployeeTest.spec.ts / DeleteEmployeeTest.spec.ts
 .github/workflows/playwright.yml  CI - see §7
 playwright.config.ts
 tsconfig.json                    TypeScript compiler config
@@ -98,7 +100,9 @@ What changed as a result:
 - **The Employee ID field and the three login-credential fields** (username/password/confirm password on the Add Employee form) genuinely have **no** name/id/placeholder at all - verified live, this isn't an oversight to fix by picking a better attribute, there isn't one. The old `loginUsernameInput` selector was a 15-level-deep `nth-child` chain that would break on any layout change with zero warning. All four now anchor on their nearby `<label>` text instead (`inputGroupByLabel()` in `PIMPage.locators.ts`) - still not as strong as a real attribute, but tied to human-readable label text instead of raw DOM position, and verified to resolve to exactly one element each (the "Password" match needs an exact regex, not a substring, since "Confirm Password" would otherwise also match).
 - **Two locators were kept as-is on purpose after verification**, not out of neglect: the breadcrumb heading's CSS class (verified live there are 2 `<h6>`s on some pages, so a generic role-based heading locator would be ambiguous - the specific class is actually the safer choice here) and `profileName`/`profileDropdown`'s CSS class (a plain `<p>` with no semantic role to key off - this class is already the most stable option available). `profileName` in `PIMPage.locators.ts` was also deduplicated to reuse `topBar.locators.ts`'s `profileDropdown` instead of maintaining an identical selector in two places.
 - **The Employee Personal Details page's "Save" button** (`EmployeePersonalDetailsPage.locators.ts`) has the same ambiguity risk as the Employee ID field above, but for a different reason: the page has **two** `<form>` elements, each with its own "Save" button. `getByRole("button", { name: "Save" })` alone would be ambiguous - it's scoped to specifically the form containing `input[name='firstName']` first, which resolves to exactly one match.
-- **Two accessible-name whitespace bugs were caught via actual failed test runs**, not by reasoning about the markup: the "Add" and "Login" buttons both have an icon before their text, giving them computed accessible names of `" Add"`/`" Login"` (leading space) - an `exact: true` match against `"Add"`/`"Login"` silently fails. Found via Playwright's own `ariaSnapshot()`, not a different inspection tool's rendering of the same page, since the two didn't agree with each other during this audit.
+- **Two accessible-name whitespace bugs were caught via actual failed test runs**, not by reasoning about the markup: the "Add" and "Login" buttons both have an icon before their text, giving them computed accessible names of `" Add"`/`" Login"` (leading space) - an `exact: true` match against `"Add"`/`"Login"` silently fails. Found via Playwright's own `ariaSnapshot()`, not a different inspection tool's rendering of the same page, since the two didn't agree with each other during this audit. The Delete flow's "Yes, Delete" dialog button has the exact same icon-before-text pattern - applied non-exact matching there from the start instead of rediscovering the bug a third time.
+- **The Employee List's "Employee Name" search field** (`PIMPage.locators.ts`) looked unique by its placeholder ("Type for hints...") during manual exploration, but that exploration used a `.find()` that silently grabbed the first match - an actual Playwright locator correctly refused to guess and failed with a strict-mode violation, since the filter panel also has a "Supervisor Name" field sharing that exact placeholder. Fixed with the same `inputGroupByLabel()` label-anchoring already used for the Add Employee form, scoped to "Employee Name" specifically. A tool that silently tolerates ambiguity isn't proof a locator is unique - only a real strict-mode check is.
+- **The Employee List row's delete icon has no accessible name at all** - verified live: no `aria-label`, no `title`, no visible text, just an icon. This is a real accessibility gap in the app itself, not something a better selector can paper over. Anchored on the icon's own class (`i.bi-trash`, a purpose-built Bootstrap Icons name) scoped to the specific employee's row instead - see §6 for why that row-scoping is also a safety measure, not just a stability one.
 
 ## 5. Configuration & credentials
 
@@ -117,13 +121,15 @@ What changed as a result:
 
 **A real race condition found while building Edit Employee, worth knowing about if this page gets touched again:** the Personal Details page's form renders pre-filled with the employee's current data, then silently re-fetches and re-populates that same data a moment later. Filling the fields immediately after the page loads (or right after creating the employee, since the Add flow redirects straight here) gets silently overwritten by that second population - the save still succeeds and shows "Successfully Updated", just with the *original* values instead of the edit. `EmployeePersonalDetailsPage.editName()` waits for network idle before filling to avoid this; a `not.toHaveValue("")` check does **not** catch it, since the field is already non-empty from the pre-fill.
 
+**Delete Employee only ever deletes data it created itself, and checks that safely.** This Employee List is shared with everyone using this public demo - `PIMPage.deleteEmployee()` asserts the search narrowed to exactly one matching row (`toHaveCount(1)`) before clicking that row's delete icon, so an ambiguous match fails the test loudly instead of risking a delete against the wrong (possibly someone else's) employee. `DeleteEmployeeTest.spec.ts` also searches by a generated last name alone, not the full "first last" string - the Employee List's autocomplete can render an extra space when there's no middle name, which would break a multi-word substring match.
+
 ## 7. CI
 
 `.github/workflows/playwright.yml` runs the full suite on every push and pull request to `main`/`master`: checks out, enables corepack (so pnpm resolves to the exact version pinned in `package.json`'s `packageManager` field), installs dependencies (`pnpm install --frozen-lockfile`), installs Chromium with its OS dependencies, runs the suite, and uploads the HTML report as a build artifact. No secrets are required - the credential fallback in §5 means CI works out of the box against the public demo instance.
 
 ## 8. Test naming
 
-Every test title is `"<Test ID>: <Test Case Title>"` - e.g. `"TC_CEF_001: Add Employee Without Middle Name"` - so a test is identifiable by ID alone (for cross-referencing a test plan, a bug report, a CI failure notification) while the title still reads clearly on its own in the HTML report or terminal output. IDs are grouped by feature area with a numeric suffix: `TC_LOGIN_*`, `TC_NAV_*`, `TC_CEF_*` ("Create Employee Form"), `TC_EEF_*` ("Edit Employee Form"). Give a new test the next number in whichever prefix it belongs to, or a new prefix if it's a new feature area.
+Every test title is `"<Test ID>: <Test Case Title>"` - e.g. `"TC_CEF_001: Add Employee Without Middle Name"` - so a test is identifiable by ID alone (for cross-referencing a test plan, a bug report, a CI failure notification) while the title still reads clearly on its own in the HTML report or terminal output. IDs are grouped by feature area with a numeric suffix: `TC_LOGIN_*`, `TC_NAV_*`, `TC_CEF_*` ("Create Employee Form"), `TC_EEF_*` ("Edit Employee Form"), `TC_DEF_*` ("Delete Employee Form"). Give a new test the next number in whichever prefix it belongs to, or a new prefix if it's a new feature area.
 
 ## 9. Extending the suite
 

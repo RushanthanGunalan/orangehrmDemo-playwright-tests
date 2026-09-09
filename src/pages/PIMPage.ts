@@ -111,4 +111,53 @@ export default class PIMPage {
     console.log("expected Error Messsage ", expectedErrorMessage);
     expect(expectedErrorMessage).toContain(errorMessage);
   }
+
+  /**
+   * Searches the Employee List by name. Pass a single-word value (e.g. a
+   * generated last name) rather than a full "first last" string - verified
+   * live that the autocomplete's own suggestion text can render with an
+   * extra space when there's no middle name, which would break a
+   * multi-word substring match against it.
+   */
+  async searchEmployeeByName(searchTerm: string) {
+    await this.locators.employeeNameSearchInput.fill(searchTerm);
+    await this.locators.autocompleteOptionByText(searchTerm).first().click();
+    await this.locators.searchButton.click();
+  }
+
+  /**
+   * Deletes the employee matching searchTerm - call searchEmployeeByName()
+   * first. Confirms the search narrowed to exactly one row before clicking
+   * delete: this Employee List is shared with everyone using this public
+   * demo, so an ambiguous match is a reason to fail loudly, never a reason
+   * to guess which row to delete.
+   */
+  async deleteEmployee(searchTerm: string) {
+    const row = this.locators.rowByEmployeeName(searchTerm);
+    await expect(row).toHaveCount(1, { timeout: 10000 });
+    await this.locators.deleteButtonInRow(row).click();
+  }
+
+  async confirmDelete() {
+    await expect(this.locators.confirmDeleteDialog).toBeVisible({
+      timeout: 10000,
+    });
+    await this.locators.confirmDeleteButton.click();
+  }
+
+  async cancelDelete() {
+    await expect(this.locators.confirmDeleteDialog).toBeVisible({
+      timeout: 10000,
+    });
+    await this.locators.cancelDeleteButton.click();
+  }
+
+  async assertDeleteSucceeded() {
+    await expect(this.locators.deleteSuccessToastMessage).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(this.locators.deleteSuccessToastMessage).toHaveText(
+      "Successfully Deleted",
+    );
+  }
 }

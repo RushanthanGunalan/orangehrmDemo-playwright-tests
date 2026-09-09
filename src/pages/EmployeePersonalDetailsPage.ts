@@ -84,4 +84,21 @@ export default class EmployeePersonalDetailsPage {
       timeout: 30000,
     });
   }
+
+  /**
+   * Confirms an employee no longer exists by navigating straight to their
+   * (former) Personal Details URL - verified live this shows
+   * "No Records Found" instead of the form once deleted. Cleaner and more
+   * direct than re-searching the Employee List, which showed a confusing
+   * stale record count immediately after a delete in manual testing.
+   */
+  async assertEmployeeDoesNotExist(empNumber: string) {
+    const { origin } = new URL(config.baseUrl);
+    await this.page.goto(
+      `${origin}/web/index.php/pim/viewPersonalDetails/empNumber/${empNumber}`,
+    );
+    await expect(this.locators.noRecordsFoundMessage).toBeVisible({
+      timeout: 30000,
+    });
+  }
 }

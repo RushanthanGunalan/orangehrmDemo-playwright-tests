@@ -1,11 +1,13 @@
 import { Page, Locator } from "@playwright/test";
+import { toastLocators } from "./components/toast.locators";
 
 /**
  * The Personal Details page an employee lands on after creation (or is
  * reached via /pim/viewPersonalDetails/empNumber/<n>). This is where an
  * existing employee's details are edited - a different page/form than the
  * Add Employee one, despite sharing the same firstName/lastName/middleName
- * field names.
+ * field names. The same URL pattern also shows a "No Records Found"
+ * message instead when the employee has been deleted.
  */
 export type EmployeePersonalDetailsPageLocators = {
   employeeNameHeader: Locator;
@@ -14,6 +16,7 @@ export type EmployeePersonalDetailsPageLocators = {
   lastNameInput: Locator;
   saveButton: Locator;
   successToastMessage: Locator;
+  noRecordsFoundMessage: Locator;
 };
 
 export function employeePersonalDetailsPageLocators(
@@ -40,11 +43,13 @@ export function employeePersonalDetailsPageLocators(
     // button (verified harmless there - comments don't affect the
     // computed accessible name, unlike the Add button's real <i> icon).
     saveButton: nameForm.getByRole("button", { name: "Save" }),
-    // Verified live: the success toast's message-specific class, scoped to
-    // the success-styled toast container so it can never accidentally
-    // match an error toast's message text instead.
-    successToastMessage: page.locator(
-      ".oxd-toast--success .oxd-text--toast-message",
-    ),
+    successToastMessage: toastLocators(page).successMessage,
+    // Verified live: navigating straight to a deleted employee's
+    // empNumber URL shows this text instead of the Personal Details form -
+    // a clean, direct way to confirm a delete persisted, without depending
+    // on the Employee List's own search/filter state.
+    noRecordsFoundMessage: page.getByText("No Records Found", {
+      exact: true,
+    }),
   };
 }

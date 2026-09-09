@@ -1,6 +1,7 @@
 import { Page, Locator } from "@playwright/test";
 import { sidebarNavLocators } from "./components/sidebarNav.locators";
 import { topBarLocators } from "./components/topBar.locators";
+import { toastLocators } from "./components/toast.locators";
 
 /**
  * The Add Employee form's inputs have no name/id/placeholder at all
@@ -34,6 +35,15 @@ export type PIMPageLocators = {
   profileName: Locator;
   loginErrorMessage: Locator;
   pimMenuItem: Locator;
+  employeeNameSearchInput: Locator;
+  autocompleteOptionByText: (name: string) => Locator;
+  searchButton: Locator;
+  rowByEmployeeName: (fullName: string) => Locator;
+  deleteButtonInRow: (row: Locator) => Locator;
+  confirmDeleteDialog: Locator;
+  confirmDeleteButton: Locator;
+  cancelDeleteButton: Locator;
+  deleteSuccessToastMessage: Locator;
 };
 
 export function pimPageLocators(page: Page): PIMPageLocators {
@@ -78,5 +88,41 @@ export function pimPageLocators(page: Page): PIMPageLocators {
       ".oxd-text.oxd-text--p.oxd-alert-content-text",
     ),
     pimMenuItem: sidebarNavLocators(page).menuItemByName("PIM"),
+
+    // --- Employee List search + delete (verified live) ---
+
+    // Verified live via an actual failed run: "Type for hints..." isn't
+    // unique - the Employee List filter panel has both an "Employee Name"
+    // and a "Supervisor Name" autocomplete sharing that exact placeholder.
+    // Same label-anchoring approach as the Add Employee form's unlabeled
+    // fields (same .oxd-input-group wrapper structure, confirmed live).
+    employeeNameSearchInput: inputGroupByLabel(page, "Employee Name"),
+    autocompleteOptionByText: (name: string) =>
+      page.locator(".oxd-autocomplete-option", { hasText: name }),
+    // Not exact: same icon-before-text pattern as "Add"/"Login" - this one
+    // has no icon (verified live, plain text "Search"), but kept non-exact
+    // for consistency and because it costs nothing here.
+    searchButton: page.getByRole("button", { name: "Search" }),
+    // Scoping to a specific employee's row before clicking its delete icon
+    // matters a lot here: this Employee List is shared with everyone using
+    // this public demo, so searching by name first and confirming exactly
+    // one row matches is what keeps this from ever deleting the wrong
+    // employee.
+    rowByEmployeeName: (fullName: string) =>
+      page.locator(".oxd-table-body .oxd-table-row", { hasText: fullName }),
+    // Verified live: the row's delete icon button has NO accessible name at
+    // all (no aria-label, no title, no visible text) - a real gap in the
+    // app's own accessibility, not something a better attribute can fix.
+    // The icon's class (Bootstrap Icons' "trash", a purpose-built name, not
+    // a generic/reused one) is the only stable hook available.
+    deleteButtonInRow: (row: Locator) => row.locator("button:has(i.bi-trash)"),
+    confirmDeleteDialog: page.locator(".oxd-dialog-container-default"),
+    // Verified live: same icon-before-text pattern as "Add" - real <i>
+    // element before " Yes, Delete ", so the computed accessible name has
+    // a leading space. Not exact, learned from the "Add" button rather
+    // than rediscovering it via another failed run.
+    confirmDeleteButton: page.getByRole("button", { name: "Yes, Delete" }),
+    cancelDeleteButton: page.getByRole("button", { name: "No, Cancel" }),
+    deleteSuccessToastMessage: toastLocators(page).successMessage,
   };
 }
