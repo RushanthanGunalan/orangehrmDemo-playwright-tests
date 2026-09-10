@@ -1,6 +1,6 @@
 # OrangeHRM UI Automation — Playwright
 
-End-to-end UI test automation for the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) built with **Playwright** and the **Page Object Model (POM)**. The suite covers authentication, side-panel navigation, and the PIM "Add Employee", "Edit Employee", and "Delete Employee" workflows (including login-credential creation and account-status validation).
+End-to-end UI test automation for the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) built with **Playwright** and the **Page Object Model (POM)**. The suite covers authentication, side-panel navigation, and the PIM "Add Employee", "Edit Employee", "Search Employee", and "Delete Employee" workflows (including login-credential creation, blank-form validation, cancel-out, and account-status validation).
 
 <p>
   <img alt="Playwright" src="https://img.shields.io/badge/Playwright-2EAD33?logo=playwright&logoColor=white">
@@ -60,6 +60,7 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 │   ├── Navigation.spec.ts
 │   ├── AddEmployeeTest.spec.ts
 │   ├── EditEmployeeTest.spec.ts
+│   ├── SearchEmployeeTest.spec.ts
 │   └── DeleteEmployeeTest.spec.ts
 ├── .github/workflows/      # CI
 ├── playwright.config.ts   # Playwright configuration

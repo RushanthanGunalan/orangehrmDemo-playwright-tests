@@ -25,6 +25,9 @@ export type PIMPageLocators = {
   middleNameInput: Locator;
   employeeIdInput: Locator;
   submitButton: Locator;
+  cancelButton: Locator;
+  firstNameError: Locator;
+  lastNameError: Locator;
   addedEmployeeHeading: Locator;
   loginDetailsToggle: Locator;
   loginUsernameInput: Locator;
@@ -67,6 +70,28 @@ export function pimPageLocators(page: Page): PIMPageLocators {
     // the nearby "Employee Id" label is the only stable hook available.
     employeeIdInput: inputGroupByLabel(page, "Employee Id"),
     submitButton: page.locator("button[type='submit']"),
+    // Verified live: comment-node-before-text pattern (not a real <i>
+    // icon), so the accessible name is a clean "Cancel" - non-exact kept
+    // for consistency with the other button locators.
+    cancelButton: page.getByRole("button", { name: "Cancel" }),
+    // Verified live via a failed run + a DOM dump: the "Employee Full Name"
+    // field nests THREE inner .oxd-input-group wrappers (first / middle /
+    // last) inside one outer .oxd-input-group. Filtering on `has` firstName
+    // alone matched both the inner firstName wrapper AND the outer wrapper
+    // (which also contains lastName), so `.oxd-input-field-error-message`
+    // resolved to two spans. `hasNot` the sibling input pins it to just
+    // the one inner wrapper - each shows its own "Required" span on a
+    // blank submit.
+    firstNameError: page
+      .locator(".oxd-input-group")
+      .filter({ has: page.locator("input[name='firstName']") })
+      .filter({ hasNot: page.locator("input[name='lastName']") })
+      .locator(".oxd-input-field-error-message"),
+    lastNameError: page
+      .locator(".oxd-input-group")
+      .filter({ has: page.locator("input[name='lastName']") })
+      .filter({ hasNot: page.locator("input[name='firstName']") })
+      .locator(".oxd-input-field-error-message"),
     addedEmployeeHeading: page.locator(".oxd-text.oxd-text--h6.--strong"),
     // Verified live: the only switch on this form.
     loginDetailsToggle: page.locator("div.oxd-switch-wrapper"),

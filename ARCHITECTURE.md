@@ -2,7 +2,7 @@
 
 ## 1. What this repo is
 
-A small Playwright + TypeScript regression suite against the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) - login, side-panel navigation, and the PIM "Add Employee", "Edit Employee", and "Delete Employee" flows (including login-credential creation and account-status checks). 8 tests across 5 spec files. See [README.md](README.md) for day-to-day commands.
+A small Playwright + TypeScript regression suite against the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) - login, side-panel navigation, and the PIM "Add Employee", "Edit Employee", "Search Employee", and "Delete Employee" flows (including login-credential creation, blank-form validation, cancel-out, and account-status checks). 11 tests across 6 spec files. See [README.md](README.md) for day-to-day commands.
 
 This is a portfolio-scale project, not an enterprise QA suite - so unlike larger Playwright repos you might see the same author work on, there's deliberately no QA-Type taxonomy, no Discord notification pipeline, and no tracking spreadsheet here. Just the parts that earn their keep at this size: a clean Locator Library split and credentials out of source.
 
@@ -40,7 +40,7 @@ utils/
   commonActions.ts                shared interaction wrappers (locator-based)
 tests/
   Login.spec.ts / Navigation.spec.ts / AddEmployeeTest.spec.ts
-  EditEmployeeTest.spec.ts / DeleteEmployeeTest.spec.ts
+  EditEmployeeTest.spec.ts / SearchEmployeeTest.spec.ts / DeleteEmployeeTest.spec.ts
 .github/workflows/playwright.yml  CI - see §7
 playwright.config.ts
 tsconfig.json                    TypeScript compiler config
@@ -103,6 +103,7 @@ What changed as a result:
 - **Two accessible-name whitespace bugs were caught via actual failed test runs**, not by reasoning about the markup: the "Add" and "Login" buttons both have an icon before their text, giving them computed accessible names of `" Add"`/`" Login"` (leading space) - an `exact: true` match against `"Add"`/`"Login"` silently fails. Found via Playwright's own `ariaSnapshot()`, not a different inspection tool's rendering of the same page, since the two didn't agree with each other during this audit. The Delete flow's "Yes, Delete" dialog button has the exact same icon-before-text pattern - applied non-exact matching there from the start instead of rediscovering the bug a third time.
 - **The Employee List's "Employee Name" search field** (`PIMPage.locators.ts`) looked unique by its placeholder ("Type for hints...") during manual exploration, but that exploration used a `.find()` that silently grabbed the first match - an actual Playwright locator correctly refused to guess and failed with a strict-mode violation, since the filter panel also has a "Supervisor Name" field sharing that exact placeholder. Fixed with the same `inputGroupByLabel()` label-anchoring already used for the Add Employee form, scoped to "Employee Name" specifically. A tool that silently tolerates ambiguity isn't proof a locator is unique - only a real strict-mode check is.
 - **The Employee List row's delete icon has no accessible name at all** - verified live: no `aria-label`, no `title`, no visible text, just an icon. This is a real accessibility gap in the app itself, not something a better selector can paper over. Anchored on the icon's own class (`i.bi-trash`, a purpose-built Bootstrap Icons name) scoped to the specific employee's row instead - see §6 for why that row-scoping is also a safety measure, not just a stability one.
+- **The Add Employee "Employee Full Name" field nests three input groups inside one** - verified live via a failed strict-mode run plus a DOM dump: the outer `.oxd-input-group` (label "Employee Full Name") wraps a separate inner `.oxd-input-group` for each of first / middle / last name, and each inner one renders its own "Required" error span on a blank submit. A `filter({ has: input[name='firstName'] })` on `.oxd-input-group` matched both the inner firstName wrapper and the outer wrapper (which also contains lastName), so the error-message sub-locator resolved to two spans and failed strict mode. `firstNameError`/`lastNameError` now add `filter({ hasNot: <the sibling input> })` to pin each to just its own inner wrapper. `assertRequiredFieldErrorsShown()` checks the two with `expect.soft()` so one missing error still reports the other.
 
 ## 5. Configuration & credentials
 
@@ -121,6 +122,8 @@ What changed as a result:
 
 **A real race condition found while building Edit Employee, worth knowing about if this page gets touched again:** the Personal Details page's form renders pre-filled with the employee's current data, then silently re-fetches and re-populates that same data a moment later. Filling the fields immediately after the page loads (or right after creating the employee, since the Add flow redirects straight here) gets silently overwritten by that second population - the save still succeeds and shows "Successfully Updated", just with the *original* values instead of the edit. `EmployeePersonalDetailsPage.editName()` waits for network idle before filling to avoid this; a `not.toHaveValue("")` check does **not** catch it, since the field is already non-empty from the pre-fill.
 
+**`TC_SEF_001` (Search Employee) is marked `test.slow()` and does no cleanup.** Its create -> navigate -> autocomplete -> search chain is a lot of round-trips against the shared public demo, which goes through slow spells (the same 60s per-test timeout intermittently catches `TC_CEF_003`/`TC_CEF_004`, which also log in as a freshly-created employee). `test.slow()` triples the budget rather than papering over site latency with per-step waits. It deliberately leaves its created employee behind - its scope is "search finds the record", and the Add/Edit specs already leave their data too; only `DeleteEmployeeTest` exercises removal, and only on what it made.
+
 **Delete Employee only ever deletes data it created itself, and checks that safely.** This Employee List is shared with everyone using this public demo - `PIMPage.deleteEmployee()` asserts the search narrowed to exactly one matching row (`toHaveCount(1)`) before clicking that row's delete icon, so an ambiguous match fails the test loudly instead of risking a delete against the wrong (possibly someone else's) employee. `DeleteEmployeeTest.spec.ts` also searches by a generated last name alone, not the full "first last" string - the Employee List's autocomplete can render an extra space when there's no middle name, which would break a multi-word substring match.
 
 ## 7. CI
@@ -129,7 +132,7 @@ What changed as a result:
 
 ## 8. Test naming
 
-Every test title is `"<Test ID>: <Test Case Title>"` - e.g. `"TC_CEF_001: Add Employee Without Middle Name"` - so a test is identifiable by ID alone (for cross-referencing a test plan, a bug report, a CI failure notification) while the title still reads clearly on its own in the HTML report or terminal output. IDs are grouped by feature area with a numeric suffix: `TC_LOGIN_*`, `TC_NAV_*`, `TC_CEF_*` ("Create Employee Form"), `TC_EEF_*` ("Edit Employee Form"), `TC_DEF_*` ("Delete Employee Form"). Give a new test the next number in whichever prefix it belongs to, or a new prefix if it's a new feature area.
+Every test title is `"<Test ID>: <Test Case Title>"` - e.g. `"TC_CEF_001: Add Employee Without Middle Name"` - so a test is identifiable by ID alone (for cross-referencing a test plan, a bug report, a CI failure notification) while the title still reads clearly on its own in the HTML report or terminal output. IDs are grouped by feature area with a numeric suffix: `TC_LOGIN_*`, `TC_NAV_*`, `TC_CEF_*` ("Create Employee Form"), `TC_EEF_*` ("Edit Employee Form"), `TC_SEF_*` ("Search Employee Form"), `TC_DEF_*` ("Delete Employee Form"). Give a new test the next number in whichever prefix it belongs to, or a new prefix if it's a new feature area.
 
 ## 9. Extending the suite
 

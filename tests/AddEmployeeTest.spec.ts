@@ -96,4 +96,26 @@ test.describe("Login Tests", () => {
     await pm.loginPage.login(userName, passWord);
     await pm.pimPage.assertDisabledLogin("Account disabled");
   });
+
+  test("TC_CEF_005: Add Employee Shows Required Field Errors When Name Is Blank", async () => {
+    console.log("TC_CEF_005");
+    // No faker data - this test never fills the form, so it never creates
+    // an employee and needs no cleanup. It only submits it blank and
+    // checks the client-side validation fires.
+    await pm.pimPage.navigatetoPIMPage();
+    await pm.pimPage.validatePIMPagePath("PIM");
+    await pm.pimPage.navigateToAddEmployee();
+    await pm.pimPage.assertRequiredFieldErrorsShown();
+  });
+
+  test("TC_CEF_006: Cancel Add Employee Returns To Employee List", async () => {
+    console.log("TC_CEF_006");
+    // Also creates nothing - opens the Add Employee form, cancels out of
+    // it, and confirms we land back on the Employee List.
+    await pm.pimPage.navigatetoPIMPage();
+    await pm.pimPage.validatePIMPagePath("PIM");
+    await pm.pimPage.navigateToAddEmployee();
+    await pm.pimPage.cancelAddEmployee();
+    await pm.pimPage.assertOnEmployeeList();
+  });
 });

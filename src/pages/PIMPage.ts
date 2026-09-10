@@ -60,6 +60,46 @@ export default class PIMPage {
     await this.locators.submitButton.click();
   }
 
+  async cancelAddEmployee() {
+    await this.locators.cancelButton.click();
+  }
+
+  /**
+   * Submits the Add Employee form with firstName and lastName left blank
+   * and asserts the per-field "Required" errors both appear. Uses
+   * expect.soft() so a failure on one field still checks the other and
+   * both show up in one report, rather than the test stopping at the
+   * first - they're two independent validations of the same action.
+   */
+  async assertRequiredFieldErrorsShown() {
+    await this.locators.submitButton.click();
+    await expect.soft(this.locators.firstNameError).toBeVisible({
+      timeout: 10000,
+    });
+    await expect.soft(this.locators.firstNameError).toHaveText("Required");
+    await expect.soft(this.locators.lastNameError).toBeVisible({
+      timeout: 10000,
+    });
+    await expect.soft(this.locators.lastNameError).toHaveText("Required");
+  }
+
+  /** Confirms we're back on the Employee List - its "Add" button is only
+   * present on that list page, not on the Add Employee form. */
+  async assertOnEmployeeList() {
+    await expect(this.locators.addButton).toBeVisible({ timeout: 10000 });
+  }
+
+  /**
+   * Asserts a search narrowed the Employee List to exactly one row for
+   * searchTerm and that row is visible - call searchEmployeeByName() first.
+   * Same single-word searchTerm rule as searchEmployeeByName().
+   */
+  async assertEmployeeFoundInList(searchTerm: string) {
+    const row = this.locators.rowByEmployeeName(searchTerm);
+    await expect(row).toHaveCount(1, { timeout: 10000 });
+    await expect(row).toBeVisible();
+  }
+
   async assertAddedEmployeeDetails() {
     return await this.actions.getText(this.locators.addedEmployeeHeading);
   }
