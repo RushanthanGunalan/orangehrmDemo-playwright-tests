@@ -4,7 +4,7 @@
 
 A small Playwright + TypeScript regression suite against the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) - login, side-panel navigation, and the PIM "Add Employee", "Edit Employee", "Search Employee", and "Delete Employee" flows (including login-credential creation, blank-form validation, cancel-out, and account-status checks). 11 tests across 6 spec files. See [README.md](README.md) for day-to-day commands.
 
-This is a portfolio-scale project, not an enterprise QA suite - so unlike larger Playwright repos you might see the same author work on, there's deliberately no QA-Type taxonomy, no Discord notification pipeline, and no tracking spreadsheet here. Just the parts that earn their keep at this size: a clean Locator Library split and credentials out of source.
+This is a portfolio-scale project, not an enterprise QA suite - so it keeps a light version of the patterns you'd see in the author's larger Playwright repos rather than the full versions: a small four-value QA Type tag (Smoke / Functional / Negative / Navigation, see §8 and §10) instead of a large taxonomy, one Discord notification step instead of a per-type CI dispatch matrix, and one Excel test-suite reference regenerated on demand instead of a maintained external tracker. Just the parts that earn their keep at this size, on top of a clean Locator Library split and credentials out of source.
 
 ## 2. High-level architecture
 
@@ -33,6 +33,7 @@ src/
   config/
     config.ts                    baseUrl (env-overridable getter), timeout
     credentials.ts                credential getters, read .env
+    testTypes.json                 Test ID -> QA Type map - see §10
   pages/
     PomManager.ts                 aggregates every Page Object - tests use this
     LoginPage.ts / AdminPage.ts / PIMPage.ts / EmployeePersonalDetailsPage.ts
@@ -41,6 +42,11 @@ utils/
 tests/
   Login.spec.ts / Navigation.spec.ts / AddEmployeeTest.spec.ts
   EditEmployeeTest.spec.ts / SearchEmployeeTest.spec.ts / DeleteEmployeeTest.spec.ts
+scripts/
+  notify-discord.mjs              posts a run summary to Discord - see §10
+  test-and-notify.mjs              runs the suite locally, then always notifies
+docs/
+  OrangeHRM-Test-Suite.xlsx        generated, gitignored - see §10 (not committed)
 .github/workflows/playwright.yml  CI - see §7
 playwright.config.ts
 tsconfig.json                    TypeScript compiler config
@@ -120,15 +126,19 @@ What changed as a result:
 
 `AddEmployeeTest.spec.ts` uses fixed `page.waitForTimeout(...)` sleeps (5-10s) after form submission rather than an explicit wait on the resulting state - this predates the Locator Library pass and wasn't touched during it (the ask was to restructure, not rewrite test logic). If these specs get flaky, that's the first place to look: replace the sleep with an explicit `expect(locator).toBeVisible()` on whatever confirms the save actually completed.
 
+**`TC_CEF_003` and `TC_CEF_004` share a known, pre-existing flake: a newly created employee's login isn't always immediately usable.** Both create an employee with login credentials, log out, and immediately log back in as that new user - and on the shared public demo, that fresh account occasionally rejects the very next login attempt with "Invalid credentials" (seen on `TC_CEF_003` in one run, `TC_CEF_004` in another) before working normally moments later, most likely a server-side propagation delay in the demo's own user provisioning. `retries` (see below) usually absorbs it; if both attempts still fail with "Invalid credentials" right after a create, that's this known issue, not a locator or logic regression - re-run to confirm before treating it as a real bug.
+
 **A real race condition found while building Edit Employee, worth knowing about if this page gets touched again:** the Personal Details page's form renders pre-filled with the employee's current data, then silently re-fetches and re-populates that same data a moment later. Filling the fields immediately after the page loads (or right after creating the employee, since the Add flow redirects straight here) gets silently overwritten by that second population - the save still succeeds and shows "Successfully Updated", just with the *original* values instead of the edit. `EmployeePersonalDetailsPage.editName()` waits for network idle before filling to avoid this; a `not.toHaveValue("")` check does **not** catch it, since the field is already non-empty from the pre-fill.
 
-**`TC_SEF_001` (Search Employee) is marked `test.slow()` and does no cleanup.** Its create -> navigate -> autocomplete -> search chain is a lot of round-trips against the shared public demo, which goes through slow spells (the same 60s per-test timeout intermittently catches `TC_CEF_003`/`TC_CEF_004`, which also log in as a freshly-created employee). `test.slow()` triples the budget rather than papering over site latency with per-step waits. It deliberately leaves its created employee behind - its scope is "search finds the record", and the Add/Edit specs already leave their data too; only `DeleteEmployeeTest` exercises removal, and only on what it made.
+**`TC_SEF_001` (Search Employee) is marked `test.slow()` and does no cleanup.** Its create -> navigate -> autocomplete -> search chain is a lot of round-trips against the shared public demo, which goes through slow spells (the same per-test timeout intermittently catches `TC_CEF_003`/`TC_CEF_004`, which also log in as a freshly-created employee). `test.slow()` triples the budget rather than papering over site latency with per-step waits. It deliberately leaves its created employee behind - its scope is "search finds the record", and the Add/Edit specs already leave their data too; only `DeleteEmployeeTest` exercises removal, and only on what it made.
+
+**The base per-test timeout and retry count both went up after a run where the demo itself, not this suite, was the bottleneck.** A run on 2026-09-23 saw every test - including a bare button click - blow past 60s, confirmed via `error-context.md` call logs showing plain "waiting for locator(...)" timeouts with no assertion mismatch, i.e. the site was slow to respond, not behaving differently. `timeout` moved to 90000ms and `retries` from "CI only" to `process.env.CI ? 2 : 1` (see `playwright.config.ts`) so a load spike on the shared demo costs one retry instead of a false failure locally too. A test that's actually broken still fails on the retry and gets reported - this doesn't hide real regressions, it only absorbs the shared demo's own latency.
 
 **Delete Employee only ever deletes data it created itself, and checks that safely.** This Employee List is shared with everyone using this public demo - `PIMPage.deleteEmployee()` asserts the search narrowed to exactly one matching row (`toHaveCount(1)`) before clicking that row's delete icon, so an ambiguous match fails the test loudly instead of risking a delete against the wrong (possibly someone else's) employee. `DeleteEmployeeTest.spec.ts` also searches by a generated last name alone, not the full "first last" string - the Employee List's autocomplete can render an extra space when there's no middle name, which would break a multi-word substring match.
 
 ## 7. CI
 
-`.github/workflows/playwright.yml` runs the full suite on every push and pull request to `main`/`master`: checks out, enables corepack (so pnpm resolves to the exact version pinned in `package.json`'s `packageManager` field), installs dependencies (`pnpm install --frozen-lockfile`), installs Chromium with its OS dependencies, runs the suite, and uploads the HTML report as a build artifact. No secrets are required - the credential fallback in §5 means CI works out of the box against the public demo instance.
+`.github/workflows/playwright.yml` runs the full suite on every push and pull request to `main`/`master`: checks out, enables corepack (so pnpm resolves to the exact version pinned in `package.json`'s `packageManager` field), installs dependencies (`pnpm install --frozen-lockfile`), installs Chromium with its OS dependencies, runs the suite, uploads the HTML report as a build artifact, zips that report, and notifies Discord (see §10) with the run's pass/fail counts and the zip attached. No secrets are required to run the suite itself - the credential fallback in §5 means CI works out of the box against the public demo instance - but `DISCORD_WEBHOOK_URL` must be set as a repo secret for the notify step to actually post (it silently no-ops without one, see §10).
 
 ## 8. Test naming
 
@@ -141,3 +151,16 @@ Every test title is `"<Test ID>: <Test Case Title>"` - e.g. `"TC_CEF_001: Add Em
 3. Verify the case against the live app first, not just an assumption of what it should do.
 4. Title the test `"<Test ID>: <Test Case Title>"` (see §8).
 5. Never hardcode a credential in a spec - go through `src/config/credentials.ts` (see §5 for why this project's default isn't a throw).
+6. Add the new Test ID's QA Type to `src/config/testTypes.json` (see §10) so Discord's per-type tally and a regenerated Excel test-suite reference both stay accurate instead of silently bucketing the new test under "Other".
+
+## 10. Discord notifications & the Excel test-suite reference
+
+**Discord.** `scripts/notify-discord.mjs` posts a run summary - pass/fail/flaky/skipped counts, duration, branch, commit, and a per-QA-Type tally - to a Discord channel via webhook, with the zipped HTML report attached so the report is one click away without a GitHub login. It reads `test-results/results.json` (the `json` reporter, always on - see `playwright.config.ts`) for counts and `src/config/testTypes.json` for the Test ID -> QA Type map used in the tally. `DISCORD_WEBHOOK_URL` unset is a deliberate no-op (logs and exits 0) rather than a failure - a missing or misconfigured webhook should never fail a green test run, locally or on CI. `DISCORD_THREAD_ID` is optional and posts into a thread of that channel instead of the channel itself.
+
+Two ways it runs:
+- **CI** - `.github/workflows/playwright.yml`'s `Notify Discord` step runs after every push/PR, `if: always()` (so a failed run still notifies), reading `DISCORD_WEBHOOK_URL` from the repo's secret and `DISCORD_THREAD_ID` from a repo variable if set.
+- **Local** - `pnpm test:notify` (`scripts/test-and-notify.mjs`) runs the full suite, zips `playwright-report/` with `archiver` (trace files excluded - they need `npx playwright show-trace` to view, so they're pure size cost with no payoff as a Discord attachment), and always calls `notify-discord.mjs` afterward regardless of the suite's exit code - `pnpm test && node scripts/notify-discord.mjs` would skip the notification entirely on a failed run, since `&&` short-circuits on a non-zero exit. Reads `DISCORD_WEBHOOK_URL`/`DISCORD_THREAD_ID` from `.env` (see `.env.example`) - `.env` is gitignored, so this is a local, per-developer opt-in.
+
+**QA Type tally.** `src/config/testTypes.json` maps each Test ID to one of four types used across this suite: `Smoke`, `Functional`, `Negative`, `Navigation` - a small, hand-maintained JSON mirror of the "Test Type" column in the Excel reference below, kept as JSON rather than read from the spreadsheet directly so the notify script needs no xlsx dependency. `notify-discord.mjs` tallies passed/failed per type by matching each spec's title against the `"<Test ID>: ..."` convention (§8); a Test ID missing from the map falls into "Other" instead of crashing the script - that's the signal the map has gone stale after adding or renaming a test.
+
+**Excel test-suite reference.** `docs/OrangeHRM-Test-Suite.xlsx` lists every test case - ID, Priority, Type, Module/Feature, Scenario, Steps, Input Data, Expected Result, Automated, and the spec file it lives in - one row per Test ID, plus a Summary tab with per-type counts. It's a **generated, point-in-time export**, gitignored (`docs/*.xlsx`) rather than committed: it goes stale the moment a test is added, renamed, or re-typed, so it's regenerated on demand instead of maintained by hand as a second source of truth. `src/config/testTypes.json` (committed) is the actual source of truth for each Test ID's Type; the spreadsheet is a human-readable view generated from the same test suite for sharing with whoever wants a non-repo reference (a QA lead, a test-plan review) without needing to read TypeScript.

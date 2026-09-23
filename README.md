@@ -22,6 +22,8 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 - **Dynamic test data** — [`@faker-js/faker`](https://fakerjs.dev/) generates unique employee names, IDs, and credentials per run.
 - **HTML reporting** — rich Playwright HTML reports with traces captured on retry.
 - **CI** — GitHub Actions runs the full suite on every push/PR (see `.github/workflows/playwright.yml`).
+- **Discord notifications** — a pass/fail summary (with the HTML report attached) posts to Discord after every CI run and after `pnpm test:notify` locally. Fully optional - no `DISCORD_WEBHOOK_URL` set, no message sent. See [Discord notifications](#-discord-notifications) below.
+- **Excel test-suite reference** — `docs/OrangeHRM-Test-Suite.xlsx`, a generated (not committed) spreadsheet listing every Test ID, its QA Type, steps, and expected result - see [Test suite reference](#-test-suite-reference).
 
 ## 🛠️ Tech Stack
 
@@ -46,7 +48,8 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 ├── src/
 │   ├── config/
 │   │   ├── config.ts         # baseUrl (env-overridable), timeout - no secrets
-│   │   └── credentials.ts    # credential getters, reads .env
+│   │   ├── credentials.ts    # credential getters, reads .env
+│   │   └── testTypes.json    # Test ID -> QA Type map (Discord tally + Excel reference)
 │   └── pages/                # Page Object Model - behavior only
 │       ├── PomManager.ts      # Aggregates all page objects (single entry point)
 │       ├── LoginPage.ts       # Login flow + validation
@@ -62,6 +65,11 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 │   ├── EditEmployeeTest.spec.ts
 │   ├── SearchEmployeeTest.spec.ts
 │   └── DeleteEmployeeTest.spec.ts
+├── scripts/
+│   ├── notify-discord.mjs     # posts a run summary to Discord via webhook
+│   └── test-and-notify.mjs    # runs the suite locally, then always notifies
+├── docs/
+│   └── OrangeHRM-Test-Suite.xlsx   # generated test-suite reference (gitignored, not committed)
 ├── .github/workflows/      # CI
 ├── playwright.config.ts   # Playwright configuration
 ├── tsconfig.json          # TypeScript compiler config
@@ -98,6 +106,8 @@ Nothing is required to get running — `src/config/credentials.ts` and `src/conf
 
 If you want to point the suite at a different OrangeHRM instance or account, copy `.env.example` to `.env` and fill in `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and/or `BASE_URL`. `.env` is gitignored either way.
 
+Discord notifications are separately optional - see [Discord notifications](#-discord-notifications) below; the suite runs and passes with no `.env` at all.
+
 ### Running the tests
 
 ```bash
@@ -105,6 +115,7 @@ pnpm test            # run all tests (headless)
 pnpm test:headed     # run in a visible browser
 pnpm test:ui         # open Playwright's interactive UI mode
 pnpm test:debug      # step through with the Playwright Inspector
+pnpm test:notify     # run all tests, then post the result to Discord (see below)
 pnpm report          # open the last HTML report
 ```
 
@@ -114,6 +125,26 @@ Run a single spec or test:
 pnpm exec playwright test tests/Login.spec.ts
 pnpm exec playwright test -g "TC_LOGIN_001"
 ```
+
+## 💬 Discord notifications
+
+A pass/fail summary posts to a Discord channel after every CI run, and after `pnpm test:notify` locally - branch, commit, pass/fail/flaky/skipped counts, duration, a per-QA-Type tally (Smoke / Functional / Negative / Navigation), and the zipped HTML report attached so it's one click away with no GitHub login needed.
+
+This is entirely optional and safe to ignore: with no webhook configured, `scripts/notify-discord.mjs` logs that it's skipping and exits 0 - it never fails a build.
+
+**To enable it:**
+
+1. In Discord: **Server Settings → Integrations → Webhooks → New Webhook**, then copy its URL.
+2. **Locally** - copy `.env.example` to `.env` and set `DISCORD_WEBHOOK_URL` (and optionally `DISCORD_THREAD_ID` to post into one thread instead of the channel). Then run `pnpm test:notify`.
+3. **On CI** - add `DISCORD_WEBHOOK_URL` as a repository secret (Settings → Secrets and variables → Actions → New repository secret) and, optionally, `DISCORD_THREAD_ID` as a repository *variable*. The workflow's `Notify Discord` step picks both up automatically - no code changes needed.
+
+See [ARCHITECTURE.md §10](ARCHITECTURE.md#10-discord-notifications--the-excel-test-suite-reference) for how the script is built and why it never fails the build.
+
+## 📋 Test suite reference
+
+`docs/OrangeHRM-Test-Suite.xlsx` is a generated spreadsheet listing every test case - ID, Priority, Type, Module/Feature, Scenario, Steps, Input Data, Expected Result, Automated, and its spec file - plus a Summary tab with per-type counts. It's meant for sharing with someone who wants a non-repo view of test coverage (a test-plan review, a QA handoff) without reading TypeScript.
+
+It's **not committed** (`docs/*.xlsx` is gitignored) - it's a point-in-time export that goes stale the moment a test is added or renamed, so it's regenerated on demand rather than maintained as a second, driftable source of truth. `src/config/testTypes.json` (committed) is the actual source of truth for each Test ID's QA Type.
 
 ## 🔐 Security Notes
 

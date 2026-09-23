@@ -7,7 +7,11 @@ on:
 
 jobs:
   test:
-    timeout-minutes: 30
+    # Bumped from 30: the shared public demo has had sessions where even a
+    # single click takes close to the 90s per-test timeout (see
+    # ARCHITECTURE.md §6), and CI now retries a failed test twice - a worst
+    # case of 11 tests x 3 attempts x 90s no longer fits in 30 minutes.
+    timeout-minutes: 45
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,3 +37,26 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+      # Zips the HTML report so notify-discord.mjs can attach it directly to
+      # the Discord message - a one-click download in the channel, no
+      # GitHub login required, on top of the upload-artifact copy above.
+      # Trace files (data/*.zip) are excluded - they aren't viewable in a
+      # browser anyway (they need `npx playwright show-trace`), so they're
+      # pure size cost with no payoff for a Discord attachment.
+      # continue-on-error stands in for an "only if the report dir exists"
+      # guard, in case the test step never got far enough to produce one.
+      - name: Zip HTML report for Discord
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        uses: montudor/action-zip@v1
+        with:
+          args: zip -qq -r playwright-report.zip playwright-report -x "playwright-report/data/*.zip"
+      - name: Notify Discord
+        if: ${{ always() }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_THREAD_ID: ${{ vars.DISCORD_THREAD_ID }}
+          JOB_STATUS: ${{ job.status }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          REPORT_ZIP_PATH: playwright-report.zip
+        run: node scripts/notify-discord.mjs

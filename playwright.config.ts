@@ -21,14 +21,22 @@ export default defineConfig({
   /* Default 30s is too tight for the PIM flows - they already include a
    * hardcoded page.waitForTimeout(10000) after saving an employee, on top
    * of real navigation/network time, and were bumping into the default
-   * budget even before this restructuring. */
-  timeout: 60000,
+   * budget even before this restructuring. Bumped again from 60s after a
+   * run where the shared public demo was slow enough that even a single
+   * button click blew a 60s budget (see ARCHITECTURE.md §6) - this suite
+   * has no control over that server's load, only over how much room it
+   * gives it. */
+  timeout: 90000,
   /* Run tests in files in parallel */
   fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  /* At least 1 retry everywhere, not just CI: this suite runs against a
+   * shared public demo (see ARCHITECTURE.md §6) whose load spikes cause a
+   * whole run to fail on a basic click, unrelated to any real bug - a
+   * retry re-does the test from a clean login, which usually clears once
+   * the spike passes. A genuine bug still fails twice and gets reported. */
+  retries: process.env.CI ? 2 : 1,
   /* `fullyParallel: false` above already means tests within one file never
    * run concurrently - but without pinning workers too, Playwright still
    * runs *different* files on separate workers at once by default, so
@@ -39,7 +47,14 @@ export default defineConfig({
    * false` was already going for. */
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: "html",
+  /* Also emit JSON always (not just on CI) - scripts/notify-discord.mjs
+   * reads test-results/results.json for pass/fail/flaky counts whether the
+   * run is local (`pnpm test:notify`) or on CI, and "list" on CI shows live
+   * per-test progress in the Actions log instead of staying silent until
+   * the whole run finishes. */
+  reporter: process.env.CI
+    ? [["list"], ["html"], ["json", { outputFile: "test-results/results.json" }]]
+    : [["html"], ["json", { outputFile: "test-results/results.json" }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. Sourced from

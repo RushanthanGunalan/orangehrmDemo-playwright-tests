@@ -1,0 +1,13 @@
+{
+  "TC_LOGIN_001": "Smoke",
+  "TC_NAV_001": "Navigation",
+  "TC_CEF_001": "Functional",
+  "TC_CEF_002": "Functional",
+  "TC_CEF_003": "Functional",
+  "TC_CEF_004": "Negative",
+  "TC_CEF_005": "Negative",
+  "TC_CEF_006": "Functional",
+  "TC_EEF_001": "Functional",
+  "TC_SEF_001": "Functional",
+  "TC_DEF_001": "Functional"
+}

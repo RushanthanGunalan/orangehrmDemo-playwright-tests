@@ -3,11 +3,17 @@
 node_modules/
 /test-results/
 /playwright-report/
+/playwright-report.zip
 /blob-report/
 /playwright/.cache/
 
 # Environment variables - .env isn't strictly required here (the demo
 # credentials have safe public fallbacks, see src/config/credentials.ts),
 # but keep it out of git regardless in case it's ever used to point at a
-# non-public OrangeHRM instance.
+# non-public OrangeHRM instance, or to hold a DISCORD_WEBHOOK_URL.
 .env
+
+# Point-in-time test-suite export (docs/OrangeHRM-Test-Suite.xlsx) - stale
+# the moment a test is added or renamed; regenerate on demand instead of
+# committing. src/config/testTypes.json is the committed source of truth.
+docs/*.xlsx
