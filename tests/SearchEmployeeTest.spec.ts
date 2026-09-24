@@ -35,7 +35,7 @@ test.describe("Search Employee", () => {
     await pm.pimPage.navigateToAddEmployee();
     await pm.pimPage.addEmployee(firstName, lastName, null, randomID);
     await pm.pimPage.saveEmployeeDetails();
-    await pm.page.waitForURL(/empNumber\/\d+/, { timeout: 30000 });
+    await pm.page.waitForURL(/empNumber\/\d+/);
     const empNumber = pm.employeePersonalDetailsPage.getEmpNumberFromUrl();
     console.log("TC_SEF_001 searching for empNumber:", empNumber);
 

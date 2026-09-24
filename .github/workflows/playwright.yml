@@ -7,11 +7,11 @@ on:
 
 jobs:
   test:
-    # Bumped from 30: the shared public demo has had sessions where even a
-    # single click takes close to the 90s per-test timeout (see
-    # ARCHITECTURE.md §6), and CI now retries a failed test twice - a worst
-    # case of 11 tests x 3 attempts x 90s no longer fits in 30 minutes.
-    timeout-minutes: 45
+    # Bumped from 30: the shared public demo has sessions where a single
+    # element takes close to the 60s wait (see ARCHITECTURE.md §6), and CI
+    # retries a failed test twice - a bad-spell run (11 tests x up to 3
+    # attempts x several 60s waits) no longer fits in 45 minutes.
+    timeout-minutes: 90
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

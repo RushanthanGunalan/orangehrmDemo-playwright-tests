@@ -32,7 +32,7 @@ test.describe("Delete Employee", () => {
     // saveEmployeeDetails() only clicks submit and doesn't wait for the
     // resulting redirect itself - wait for the URL explicitly so
     // getEmpNumberFromUrl() below doesn't read a stale one.
-    await pm.page.waitForURL(/empNumber\/\d+/, { timeout: 30000 });
+    await pm.page.waitForURL(/empNumber\/\d+/);
     const empNumber = pm.employeePersonalDetailsPage.getEmpNumberFromUrl();
     console.log("TC_DEF_001 deleting empNumber:", empNumber);
 

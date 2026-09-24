@@ -26,9 +26,7 @@ export default class EmployeePersonalDetailsPage {
     await this.page.goto(
       `${origin}/web/index.php/pim/viewPersonalDetails/empNumber/${empNumber}`,
     );
-    await expect(this.locators.employeeNameHeader).toBeVisible({
-      timeout: 30000,
-    });
+    await expect(this.locators.employeeNameHeader).toBeVisible();
   }
 
   /** Reads the employee number straight out of the current URL - valid
@@ -67,9 +65,7 @@ export default class EmployeePersonalDetailsPage {
   }
 
   async assertSaveSucceeded() {
-    await expect(this.locators.successToastMessage).toBeVisible({
-      timeout: 10000,
-    });
+    await expect(this.locators.successToastMessage).toBeVisible();
     await expect(this.locators.successToastMessage).toHaveText(
       "Successfully Updated",
     );
@@ -80,9 +76,7 @@ export default class EmployeePersonalDetailsPage {
    * rather than just updating client state. */
   async assertEmployeeNameIs(fullName: string) {
     await this.page.reload();
-    await expect(this.locators.employeeNameHeader).toHaveText(fullName, {
-      timeout: 30000,
-    });
+    await expect(this.locators.employeeNameHeader).toHaveText(fullName);
   }
 
   /**
@@ -97,8 +91,6 @@ export default class EmployeePersonalDetailsPage {
     await this.page.goto(
       `${origin}/web/index.php/pim/viewPersonalDetails/empNumber/${empNumber}`,
     );
-    await expect(this.locators.noRecordsFoundMessage).toBeVisible({
-      timeout: 30000,
-    });
+    await expect(this.locators.noRecordsFoundMessage).toBeVisible();
   }
 }

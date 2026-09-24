@@ -26,7 +26,15 @@ export default defineConfig({
    * button click blew a 60s budget (see ARCHITECTURE.md §6) - this suite
    * has no control over that server's load, only over how much room it
    * gives it. */
-  timeout: 90000,
+  timeout: 360000,
+  /* The "implicit wait": every element lookup, action, web-first assertion
+   * and navigation gets config.waitTimeout (60s, WAIT_TIMEOUT_MS to
+   * override) before failing. Without these, actions have no cap of their
+   * own (they hang until the whole test times out) and assertions only get
+   * Playwright's 5s default. The per-test timeout above has to be large
+   * enough to fit several of these waits back to back - a single flow
+   * (login, navigate, add, save, redirect) can chain 5+ of them. */
+  expect: { timeout: config.waitTimeout },
   /* Run tests in files in parallel */
   fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -61,6 +69,9 @@ export default defineConfig({
      * src/config/config.ts (BASE_URL env var, falls back to the public
      * OrangeHRM demo instance) - see that file for why it's a getter. */
     baseURL: config.baseUrl,
+
+    actionTimeout: config.waitTimeout,
+    navigationTimeout: config.waitTimeout,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",

@@ -1,4 +1,5 @@
 import { Page, Locator, expect } from "@playwright/test";
+import { config } from "../src/config/config";
 import {
   sidebarNavLocators,
   SidebarNavLocators,
@@ -18,7 +19,7 @@ export default class CommonActions {
   readonly sidebarNav: SidebarNavLocators;
   readonly topBar: TopBarLocators;
   // Default time to wait for an element to become visible at a checkpoint.
-  readonly defaultTimeout = 30000;
+  readonly defaultTimeout = config.waitTimeout;
 
   constructor(page: Page) {
     this.page = page;

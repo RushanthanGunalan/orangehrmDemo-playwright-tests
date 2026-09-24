@@ -60,6 +60,18 @@ export default class PIMPage {
     await this.locators.submitButton.click();
   }
 
+  /**
+   * Waits for the redirect to the new employee's Personal Details page,
+   * which only happens once the server has finished saving the employee
+   * (and their login, if one was requested). Replaces the fixed 5-10s
+   * sleeps the Add specs used after Save: on a slow demo the sleep ended
+   * before the save did, so a test that logged out and straight back in as
+   * the new user hit "Invalid credentials" - the account didn't exist yet.
+   */
+  async waitForEmployeeSaved() {
+    await this.page.waitForURL(/empNumber\/\d+/);
+  }
+
   async cancelAddEmployee() {
     await this.locators.cancelButton.click();
   }
@@ -73,20 +85,16 @@ export default class PIMPage {
    */
   async assertRequiredFieldErrorsShown() {
     await this.locators.submitButton.click();
-    await expect.soft(this.locators.firstNameError).toBeVisible({
-      timeout: 10000,
-    });
+    await expect.soft(this.locators.firstNameError).toBeVisible();
     await expect.soft(this.locators.firstNameError).toHaveText("Required");
-    await expect.soft(this.locators.lastNameError).toBeVisible({
-      timeout: 10000,
-    });
+    await expect.soft(this.locators.lastNameError).toBeVisible();
     await expect.soft(this.locators.lastNameError).toHaveText("Required");
   }
 
   /** Confirms we're back on the Employee List - its "Add" button is only
    * present on that list page, not on the Add Employee form. */
   async assertOnEmployeeList() {
-    await expect(this.locators.addButton).toBeVisible({ timeout: 10000 });
+    await expect(this.locators.addButton).toBeVisible();
   }
 
   /**
@@ -96,7 +104,7 @@ export default class PIMPage {
    */
   async assertEmployeeFoundInList(searchTerm: string) {
     const row = this.locators.rowByEmployeeName(searchTerm);
-    await expect(row).toHaveCount(1, { timeout: 10000 });
+    await expect(row).toHaveCount(1);
     await expect(row).toBeVisible();
   }
 
@@ -174,28 +182,22 @@ export default class PIMPage {
    */
   async deleteEmployee(searchTerm: string) {
     const row = this.locators.rowByEmployeeName(searchTerm);
-    await expect(row).toHaveCount(1, { timeout: 10000 });
+    await expect(row).toHaveCount(1);
     await this.locators.deleteButtonInRow(row).click();
   }
 
   async confirmDelete() {
-    await expect(this.locators.confirmDeleteDialog).toBeVisible({
-      timeout: 10000,
-    });
+    await expect(this.locators.confirmDeleteDialog).toBeVisible();
     await this.locators.confirmDeleteButton.click();
   }
 
   async cancelDelete() {
-    await expect(this.locators.confirmDeleteDialog).toBeVisible({
-      timeout: 10000,
-    });
+    await expect(this.locators.confirmDeleteDialog).toBeVisible();
     await this.locators.cancelDeleteButton.click();
   }
 
   async assertDeleteSucceeded() {
-    await expect(this.locators.deleteSuccessToastMessage).toBeVisible({
-      timeout: 10000,
-    });
+    await expect(this.locators.deleteSuccessToastMessage).toBeVisible();
     await expect(this.locators.deleteSuccessToastMessage).toHaveText(
       "Successfully Deleted",
     );

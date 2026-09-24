@@ -26,7 +26,7 @@ test.describe("Login Tests", () => {
     await pm.pimPage.navigateToAddEmployee();
     await pm.pimPage.addEmployee(firstName, lastName, null, randomID);
     await pm.pimPage.saveEmployeeDetails();
-    await pm.page.waitForTimeout(10000);
+    await pm.pimPage.waitForEmployeeSaved();
     await pm.pimPage.validateAddedEmployeeDetails(firstName, lastName);
   });
 
@@ -43,7 +43,7 @@ test.describe("Login Tests", () => {
     await pm.pimPage.navigateToAddEmployee();
     await pm.pimPage.addEmployee(firstName, lastName, middleName, randomID);
     await pm.pimPage.saveEmployeeDetails();
-    await pm.page.waitForTimeout(10000);
+    await pm.pimPage.waitForEmployeeSaved();
     await pm.pimPage.validateAddedEmployeeDetails(firstName, lastName);
   });
 
@@ -68,7 +68,7 @@ test.describe("Login Tests", () => {
     await pm.pimPage.AddEmployeeLoginCredentials(userName, passWord);
     await pm.pimPage.DisableLoginCredentialStatus(false);
     await pm.pimPage.saveEmployeeDetails();
-    await pm.page.waitForTimeout(5000);
+    await pm.pimPage.waitForEmployeeSaved();
     await pm.commonActions.isLoggedOut();
     await pm.loginPage.login(userName, passWord);
     await pm.pimPage.assertCreatedEmployeeCredential(firstName, lastName);
@@ -91,7 +91,7 @@ test.describe("Login Tests", () => {
     await pm.pimPage.AddEmployeeLoginCredentials(userName, passWord);
     await pm.pimPage.DisableLoginCredentialStatus(true);
     await pm.pimPage.saveEmployeeDetails();
-    await pm.page.waitForTimeout(5000);
+    await pm.pimPage.waitForEmployeeSaved();
     await pm.commonActions.isLoggedOut();
     await pm.loginPage.login(userName, passWord);
     await pm.pimPage.assertDisabledLogin("Account disabled");

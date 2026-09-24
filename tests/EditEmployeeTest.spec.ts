@@ -35,7 +35,7 @@ test.describe("Edit Employee", () => {
     // redirect itself (other Add Employee tests mask this with a fixed
     // sleep instead) - wait for the URL explicitly rather than adding
     // another arbitrary sleep here.
-    await pm.page.waitForURL(/empNumber\/\d+/, { timeout: 30000 });
+    await pm.page.waitForURL(/empNumber\/\d+/);
     const empDetails = pm.employeePersonalDetailsPage;
     const empNumber = empDetails.getEmpNumberFromUrl();
     console.log("TC_EEF_001 editing empNumber:", empNumber);
