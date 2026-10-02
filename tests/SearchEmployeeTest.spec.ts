@@ -1,14 +1,9 @@
-import PomManager from "../src/pages/PomManager";
-import { faker } from "@faker-js/faker";
-import { test } from "@playwright/test";
+import { test } from "./fixtures";
 import { getAdminCredentials } from "../src/config/credentials";
 
-let pm: PomManager;
-
 test.describe("Search Employee", () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ pm }) => {
     const admin = getAdminCredentials();
-    pm = new PomManager(page);
     await test.step("Setup: log in as admin and land on the Dashboard", async () => {
       await pm.loginPage.navigate();
       await pm.loginPage.login(admin.username, admin.password);
@@ -16,50 +11,31 @@ test.describe("Search Employee", () => {
     });
   });
 
-  test("TC_SEF_001: Search Employee By Name Shows Matching Result", async () => {
-    // create -> navigate -> autocomplete -> search is a long chain against
-    // a shared public demo that goes through slow spells (the same 60s
-    // timeout intermittently catches the credential-login Add tests). This
-    // test's logic isn't the risk - the round-trip count is - so give it
-    // the tripled budget rather than chase the site's latency.
-    test.slow();
+  test("TC_SEF_001: Search Employee By Name Shows Matching Result", async ({ pm, testData }) => {
+    // The employee to find is created through the API (this test is about
+    // SEARCH, not the Add Employee form) rather than relying on a seeded one
+    // - the Employee List is shared with everyone using this public demo, so
+    // a "known" name could already be gone or duplicated. The generated last
+    // name carries a random suffix (see TestData.employeeName), which is what
+    // makes "exactly one match" a fair assertion on a list with hundreds of
+    // other people's employees. The fixture deletes the employee afterwards,
+    // so no clean-up step is needed here.
+    const name = testData.employeeName();
 
-    // Create a fresh employee to search for rather than relying on a
-    // seeded one - the Employee List is shared with everyone using this
-    // public demo, so a "known" name could already be gone or duplicated.
-    // A unique per-run last name is guaranteed to resolve to exactly one
-    // row, which is what makes the toHaveCount(1) assertion meaningful.
-    const firstName = faker.person.fullName();
-    const lastName = faker.person.lastName();
-    const randomID = faker.string.alphanumeric(3);
-
-    await test.step(`Arrange: create employee "${firstName} ${lastName}" in PIM`, async () => {
-      await pm.pimPage.navigatetoPIMPage();
-      await pm.pimPage.navigateToAddEmployee();
-      await pm.pimPage.addEmployee(firstName, lastName, null, randomID);
-      await pm.pimPage.saveEmployeeDetails();
-      await pm.page.waitForURL(/empNumber\/\d+/);
-      const empNumber = pm.employeePersonalDetailsPage.getEmpNumberFromUrl();
-      console.log("TC_SEF_001 searching for empNumber:", empNumber);
+    const employee = await test.step(`Arrange: create employee "${name.firstName} ${name.lastName}" via the API`, async () => {
+      return testData.createEmployee(name);
     });
+    console.log("TC_SEF_001 searching for empNumber:", employee.empNumber);
 
-    await test.step(`Act: search the Employee List for "${lastName}"`, async () => {
+    await test.step(`Act: search the Employee List for "${employee.lastName}"`, async () => {
       await pm.pimPage.navigatetoPIMPage();
       // Search by lastName alone (a single word) - see searchEmployeeByName()
       // for why the full "first last" string is unreliable here.
-      await pm.pimPage.searchEmployeeByName(lastName);
+      await pm.pimPage.searchEmployeeByName(employee.lastName);
     });
 
     await test.step("Assert: exactly one matching row is shown", async () => {
-      await pm.pimPage.assertEmployeeFoundInList(lastName);
+      await pm.pimPage.assertEmployeeFoundInList(employee.lastName);
     });
-
-    // No cleanup delete here on purpose: this test's scope is "search
-    // finds the record", and a create+search+delete chain runs long enough
-    // on the shared public demo to blow the per-test timeout (seen in a
-    // full-suite run). The Add/Edit specs likewise leave their created
-    // employees behind - only DeleteEmployeeTest exercises removal, and it
-    // only ever deletes what it made. Creating-and-leaving doesn't touch
-    // anyone else's data, so it stays within the safe-data policy.
   });
 });

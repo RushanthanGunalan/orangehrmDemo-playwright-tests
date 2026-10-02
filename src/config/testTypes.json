@@ -10,5 +10,15 @@
   "TC_EEF_001": "Functional",
   "TC_UCF_001": "Functional",
   "TC_SEF_001": "Functional",
-  "TC_DEF_001": "Functional"
+  "TC_DEF_001": "Functional",
+  "TC_TDS_001": "Unit",
+  "TC_TDS_002": "Unit",
+  "TC_TDS_003": "Unit",
+  "TC_TDS_004": "Unit",
+  "TC_TDS_005": "Unit",
+  "TC_TDS_006": "Unit",
+  "TC_TDS_007": "Unit",
+  "TC_TDS_008": "Unit",
+  "TC_TDS_009": "Unit",
+  "TC_TDS_010": "Unit"
 }

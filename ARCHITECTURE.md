@@ -2,9 +2,9 @@
 
 ## 1. What this repo is
 
-A small Playwright + TypeScript regression suite against the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) - login, side-panel navigation, and the PIM "Add Employee", "Edit Employee", "Search Employee", and "Delete Employee" flows (including login-credential creation, blank-form validation, cancel-out, and account-status checks) plus Admin User Management (user creation first; the rest of its CRUD is being added one case at a time). 12 tests across 7 spec files. See [README.md](README.md) for day-to-day commands.
+A small Playwright + TypeScript regression suite against the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) - login, side-panel navigation, and the PIM "Add Employee", "Edit Employee", "Search Employee", and "Delete Employee" flows (including login-credential creation, blank-form validation, cancel-out, and account-status checks) plus Admin User Management (user creation first; the rest of its CRUD is being added one case at a time). 22 tests across 8 spec files (12 against the browser, 10 offline tests of the cleanup's own safety guards). See [README.md](README.md) for day-to-day commands.
 
-This is a portfolio-scale project, not an enterprise QA suite - so it keeps a light version of the patterns you'd see in the author's larger Playwright repos rather than the full versions: a small four-value QA Type tag (Smoke / Functional / Negative / Navigation, see §8 and §10) instead of a large taxonomy, one Discord notification step instead of a per-type CI dispatch matrix, and one Excel test-suite reference regenerated on demand instead of a maintained external tracker. Just the parts that earn their keep at this size, on top of a clean Locator Library split and credentials out of source.
+This is a portfolio-scale project, not an enterprise QA suite - so it keeps a light version of the patterns you'd see in the author's larger Playwright repos rather than the full versions: a small five-value QA Type tag (Smoke / Functional / Negative / Navigation / Unit, see §8 and §10) instead of a large taxonomy, one Discord notification step instead of a per-type CI dispatch matrix, and one Excel test-suite reference regenerated on demand instead of a maintained external tracker. Just the parts that earn their keep at this size, on top of a clean Locator Library split and credentials out of source.
 
 ## 2. High-level architecture
 
@@ -35,15 +35,23 @@ src/
     config.ts                    baseUrl (env-overridable getter), timeout
     credentials.ts                credential getters, read .env
     testTypes.json                 Test ID -> QA Type map - see §10
+  api/
+    OrangeHrmApi.ts               own-session API client: create/find/delete employees - see §11
+  testData/
+    ids.ts                        the QAR marker id + staleness rule (decides what may be deleted)
+    purge.ts                      pre-run purge of stale leftovers, with safety guards
+    TestData.ts                   per-test factories + automatic cleanup
   pages/
     PomManager.ts                 aggregates every Page Object - tests use this
     LoginPage.ts / AdminPage.ts / PIMPage.ts / EmployeePersonalDetailsPage.ts
 utils/
   commonActions.ts                shared interaction wrappers (locator-based)
 tests/
+  fixtures.ts                     the suite's `test`: pm + testData fixtures, pre-run purge
   Login.spec.ts / Navigation.spec.ts / AddEmployeeTest.spec.ts
   EditEmployeeTest.spec.ts / SearchEmployeeTest.spec.ts / DeleteEmployeeTest.spec.ts
   AddUserTest.spec.ts
+  TestDataSafetyTest.spec.ts      offline tests of the purge/cleanup guard rails
 scripts/
   notify-discord.mjs              posts a run summary to Discord - see §10
   test-and-notify.mjs              runs the suite locally, then always notifies
@@ -138,7 +146,7 @@ Proven, not assumed: forcing the digit-less password `Abcdefg` fails the test ev
 
 **A real race condition found while building Edit Employee, worth knowing about if this page gets touched again:** the Personal Details page's form renders pre-filled with the employee's current data, then silently re-fetches and re-populates that same data a moment later. Filling the fields immediately after the page loads (or right after creating the employee, since the Add flow redirects straight here) gets silently overwritten by that second population - the save still succeeds and shows "Successfully Updated", just with the *original* values instead of the edit. `EmployeePersonalDetailsPage.editName()` waits for network idle before filling to avoid this; a `not.toHaveValue("")` check does **not** catch it, since the field is already non-empty from the pre-fill.
 
-**`TC_SEF_001` (Search Employee) is marked `test.slow()` and does no cleanup.** Its create -> navigate -> autocomplete -> search chain is a lot of round-trips against the shared public demo, which goes through slow spells (the same per-test timeout intermittently catches `TC_CEF_003`/`TC_CEF_004`, which also log in as a freshly-created employee). `test.slow()` triples the budget rather than papering over site latency with per-step waits. It deliberately leaves its created employee behind - its scope is "search finds the record", and the Add/Edit specs already leave their data too; only `DeleteEmployeeTest` exercises removal, and only on what it made.
+**Cleanup is no longer something individual tests do or skip.** `TC_SEF_001` used to carry `test.slow()` and deliberately left its employee behind, because creating through the UI and then searching was a long chain on a slow demo. Its employee now comes from the API (a few hundred ms) and the fixture deletes it afterwards, so the `test.slow()` is gone and nothing is left behind - see §11.
 
 **The base per-test timeout and retry count both went up after a run where the demo itself, not this suite, was the bottleneck.** A run on 2026-09-23 saw every test - including a bare button click - blow past 60s, confirmed via `error-context.md` call logs showing plain "waiting for locator(...)" timeouts with no assertion mismatch, i.e. the site was slow to respond, not behaving differently. `timeout` moved to 90000ms and `retries` from "CI only" to `process.env.CI ? 2 : 1` (see `playwright.config.ts`) so a load spike on the shared demo costs one retry instead of a false failure locally too. A test that's actually broken still fails on the retry and gets reported - this doesn't hide real regressions, it only absorbs the shared demo's own latency.
 
@@ -150,7 +158,7 @@ Proven, not assumed: forcing the digit-less password `Abcdefg` fails the test ev
 
 ## 8. Test naming
 
-Every test title is `"<Test ID>: <Test Case Title>"` - e.g. `"TC_CEF_001: Add Employee Without Middle Name"` - so a test is identifiable by ID alone (for cross-referencing a test plan, a bug report, a CI failure notification) while the title still reads clearly on its own in the HTML report or terminal output. IDs are grouped by feature area with a numeric suffix: `TC_LOGIN_*`, `TC_NAV_*`, `TC_CEF_*` ("Create Employee Form"), `TC_EEF_*` ("Edit Employee Form"), `TC_SEF_*` ("Search Employee Form"), `TC_DEF_*` ("Delete Employee Form"), `TC_UCF_*` ("User Creation Form" - Admin > User Management). Give a new test the next number in whichever prefix it belongs to, or a new prefix if it's a new feature area.
+Every test title is `"<Test ID>: <Test Case Title>"` - e.g. `"TC_CEF_001: Add Employee Without Middle Name"` - so a test is identifiable by ID alone (for cross-referencing a test plan, a bug report, a CI failure notification) while the title still reads clearly on its own in the HTML report or terminal output. IDs are grouped by feature area with a numeric suffix: `TC_LOGIN_*`, `TC_NAV_*`, `TC_CEF_*` ("Create Employee Form"), `TC_EEF_*` ("Edit Employee Form"), `TC_SEF_*` ("Search Employee Form"), `TC_DEF_*` ("Delete Employee Form"), `TC_UCF_*` ("User Creation Form" - Admin > User Management), `TC_TDS_*` ("Test Data Safety" - the offline guard-rail tests). Give a new test the next number in whichever prefix it belongs to, or a new prefix if it's a new feature area.
 
 ## 9. Extending the suite
 
@@ -160,7 +168,8 @@ Every test title is `"<Test ID>: <Test Case Title>"` - e.g. `"TC_CEF_001: Add Em
 4. Title the test `"<Test ID>: <Test Case Title>"` (see §8).
 5. Never hardcode a credential in a spec - go through `src/config/credentials.ts` (see §5 for why this project's default isn't a throw).
 6. Structure a longer test body as `test.step(...)` blocks (Arrange / Act / Assert), generating test data first so step titles can name the real values (employee name, username). Steps show up as a timed tree in the HTML report and trace viewer, and a failure is attributed to the step that broke - every spec follows this, including the login `beforeEach` ("Setup: ..."). Tests with no data to generate still use steps, named Act / Assert.
-7. Add the new Test ID's QA Type to `src/config/testTypes.json` (see §10) so Discord's per-type tally and a regenerated Excel test-suite reference both stay accurate instead of silently bucketing the new test under "Other".
+7. Import `test` from `./fixtures` (never straight from `@playwright/test`) and take `pm` / `testData` as parameters - no module-level `let pm`. Get every employee a test needs from `testData`: through the API (`testData.createEmployee()`) when the employee is only a prerequisite, or via the UI with `testData.employeeId()` when the form IS the test. An employee created any other way has no marker and will never be cleaned up (see §11).
+8. Add the new Test ID's QA Type to `src/config/testTypes.json` (see §10) so Discord's per-type tally and a regenerated Excel test-suite reference both stay accurate instead of silently bucketing the new test under "Other".
 
 ## 10. Discord notifications & the Excel test-suite reference
 
@@ -170,6 +179,40 @@ Two ways it runs:
 - **CI** - `.github/workflows/playwright.yml`'s `Notify Discord` step runs after every push/PR, `if: always()` (so a failed run still notifies), reading `DISCORD_WEBHOOK_URL` from the repo's secret and `DISCORD_THREAD_ID` from a repo variable if set.
 - **Local** - `pnpm test:notify` (`scripts/test-and-notify.mjs`) runs the full suite, zips `playwright-report/` with `archiver` (trace files excluded - they need `npx playwright show-trace` to view, so they're pure size cost with no payoff as a Discord attachment), and always calls `notify-discord.mjs` afterward regardless of the suite's exit code - `pnpm test && node scripts/notify-discord.mjs` would skip the notification entirely on a failed run, since `&&` short-circuits on a non-zero exit. Reads `DISCORD_WEBHOOK_URL`/`DISCORD_THREAD_ID` from `.env` (see `.env.example`) - `.env` is gitignored, so this is a local, per-developer opt-in.
 
-**QA Type tally.** `src/config/testTypes.json` maps each Test ID to one of four types used across this suite: `Smoke`, `Functional`, `Negative`, `Navigation` - a small, hand-maintained JSON mirror of the "Test Type" column in the Excel reference below, kept as JSON rather than read from the spreadsheet directly so the notify script needs no xlsx dependency. `notify-discord.mjs` tallies passed/failed per type by matching each spec's title against the `"<Test ID>: ..."` convention (§8); a Test ID missing from the map falls into "Other" instead of crashing the script - that's the signal the map has gone stale after adding or renaming a test.
+**QA Type tally.** `src/config/testTypes.json` maps each Test ID to one of five types used across this suite: `Smoke`, `Functional`, `Negative`, `Navigation`, `Unit` (the offline `TC_TDS_*` tests) - a small, hand-maintained JSON mirror of the "Test Type" column in the Excel reference below, kept as JSON rather than read from the spreadsheet directly so the notify script needs no xlsx dependency. `notify-discord.mjs` tallies passed/failed per type by matching each spec's title against the `"<Test ID>: ..."` convention (§8); a Test ID missing from the map falls into "Other" instead of crashing the script - that's the signal the map has gone stale after adding or renaming a test.
 
 **Excel test-suite reference.** `docs/OrangeHRM-Test-Suite.xlsx` lists every test case - ID, Priority, Type, Module/Feature, Scenario, Steps, Input Data, Expected Result, Automated, and the spec file it lives in - one row per Test ID, plus a Summary tab with per-type counts. It's a **generated, point-in-time export**, gitignored (`docs/*.xlsx`) rather than committed: it goes stale the moment a test is added, renamed, or re-typed, so it's regenerated on demand instead of maintained by hand as a second source of truth. `src/config/testTypes.json` (committed) is the actual source of truth for each Test ID's Type; the spreadsheet is a human-readable view generated from the same test suite for sharing with whoever wants a non-repo reference (a QA lead, a test-plan review) without needing to read TypeScript.
+
+## 11. Test data lifecycle: independence, setup, teardown, purge
+
+**Goal:** every test can run alone, in any order, and leaves nothing behind - on a demo shared with everyone, where we may only delete what we can prove is ours.
+
+**Independence.** No test reads another test's data or relies on it having run. Two things used to undercut that, and are fixed:
+- *Shared state* - every spec had a module-level `let pm` that outlived each test. `pm` is now a per-test fixture (`tests/fixtures.ts`).
+- *Cross-feature setup* - five tests needed an employee and got it by driving the Add Employee **form**, so a bug in that one screen would have failed the Edit, Delete, Search and Add User tests too. They now create the prerequisite employee through the **API** (`testData.createEmployee()`). Only `TC_CEF_001-004` still use the form, because that is the thing they test.
+Proven by running each browser test alone, in reverse suite order, with retries off (see "What was proven").
+
+**The marker.** Every test employee gets an Employee Id `QAR` + a 4-character time stamp + 3 random characters - exactly 10 characters, the server's limit (11 returns 422). The id is the only thing cleanup trusts: names are random faker values and indistinguishable from other people's. `src/testData/ids.ts` owns the pattern.
+
+**Setup.** `testData.employeeId()` / `employeeName()` / `username()` / `password()` / `createEmployee()`. The last name carries a random suffix: a plain surname ("Smith") would match many of the demo's hundreds of employees and break any "exactly one match" check - a flake the old tests had without anyone noticing. `password()` always has a digit because the form refuses one without (see §6).
+
+**Teardown (after every test).** `TestData` remembers each id it handed out; when the test ends - passed, failed or timed out - the `testData` fixture finds exactly those employees (by id, exact match) and deletes them, then looks again to confirm they are gone. Tracking *ids* rather than created records is what lets it clean up a UI-created employee from a test that died before learning the employee's number. Deleting an employee also removes their system user (verified), so users need no separate handling. It never throws: a cleanup problem is logged, added to the test as a `leaked-test-data` annotation, and left for the next run's purge - it must neither turn a passing test red nor hide a real failure. It uses its own API login, because several tests log out or log in as another user, which would leave a shared session unable to clean up.
+
+**Purge (before a run).** A worker-level fixture runs once before the first test and deletes marker employees left by earlier runs (a crashed worker, a failed teardown, Ctrl-C). It never throws either, so Login/Navigation, which need no data, can't be failed by it. Three guards, because it deletes on a shared server:
+1. The server search is only a *substring* match - hits are re-checked against the exact id pattern; look-alikes (a name containing "QAR", an id that isn't ours) are ignored.
+2. Only records **at least 10 minutes old** (stamp 3+ five-minute units behind now) are deleted, so a run in progress elsewhere (CI vs. your laptop) keeps its data. A single test is capped at 6 minutes, so nothing a live run still needs can be that old. A stamp from the future is never stale.
+3. More than 100 stale matches means something is wrong with the match, not that we made that much garbage: it deletes **nothing** and says so.
+Consequence: a record abandoned by a crash is removed by the next run **if that run starts 10+ minutes later**; an immediate re-run won't touch it yet.
+
+**What was proven (2026-10-02, live demo):**
+- *Teardown after passing tests* - one test from every data-creating spec; afterwards 0 marked records remained.
+- *Teardown after a failing test* - `TC_CEF_001` made to throw right after the UI saved the employee: the test failed, teardown still removed it by id, 0 remained.
+- *Purge* - four records planted: stale (30 min old) -> purged; fresh -> kept; future-stamped -> kept; a name containing "QAR" with an ordinary id -> kept.
+- *Independence* - every browser test run alone, reverse order, no retries: 11 of 12 passed first time; the 12th (`TC_CEF_004`) failed once with a 60s timeout, then passed 9 of 9 reruns. The failure's evidence was lost (each run wipes `test-results/`), so its cause is unknown - most likely a slow spell on the demo, but not proven.
+- *The guard rails themselves* - `TC_TDS_001-010` run offline against an in-memory fake. Mutation-checked: widening the purge to trust the server's substring match fails `TC_TDS_006`; removing the cap fails `TC_TDS_007`.
+
+**Known limits.**
+- Records created *before* this layer existed (earlier test runs) have ordinary ids and random names. They are **not** cleaned: nothing proves they are ours, and the safe-data rule is to leave what we can't prove. (The demo may reset itself now and then - employee numbers from this project's own runs dropped from ~500 to ~300 between sessions - but that is an observation, not something to rely on.)
+- The stamp is 4 base-36 characters of 5-minute units since 2025-01-01, good until about 2041.
+- A test that creates an employee *without* `testData` leaves an unmarked, uncleanable record.
+- Employees are the only thing tracked. A future test that creates something not tied to one of our employees (an orphan job title, a leave type) needs its own marker and cleanup.

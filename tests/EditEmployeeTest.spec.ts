@@ -1,14 +1,9 @@
-import PomManager from "../src/pages/PomManager";
-import { faker } from "@faker-js/faker";
-import { test } from "@playwright/test";
+import { test } from "./fixtures";
 import { getAdminCredentials } from "../src/config/credentials";
 
-let pm: PomManager;
-
 test.describe("Edit Employee", () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ pm }) => {
     const admin = getAdminCredentials();
-    pm = new PomManager(page);
     await test.step("Setup: log in as admin and land on the Dashboard", async () => {
       await pm.loginPage.navigate();
       await pm.loginPage.login(admin.username, admin.password);
@@ -16,34 +11,23 @@ test.describe("Edit Employee", () => {
     });
   });
 
-  test("TC_EEF_001: Edit Employee Name Fields", async () => {
-    // Create a fresh employee for this test to edit, rather than an
-    // existing/seeded one - this is a public demo site shared with anyone,
-    // so a "known" existing employee could be renamed, deleted, or edited
-    // concurrently by someone else. Self-created data with a unique
-    // per-run name has no such dependency and is safe to mutate freely.
-    const firstName = faker.person.fullName();
-    const lastName = faker.person.lastName();
-    const randomID = faker.string.alphanumeric(3);
-    const editedFirstName = `Edited${firstName}`;
-    const editedLastName = `Edited${lastName}`;
+  test("TC_EEF_001: Edit Employee Name Fields", async ({ pm, testData }) => {
+    // The employee to edit is created through the API: this test is about
+    // EDITING, so it must not depend on the Add Employee form working. It is
+    // self-created (never a seeded record that someone else may be using) and
+    // the fixture deletes it afterwards.
+    const name = testData.employeeName();
     const empDetails = pm.employeePersonalDetailsPage;
 
-    await test.step(`Arrange: create employee "${firstName} ${lastName}" in PIM`, async () => {
-      await pm.pimPage.navigatetoPIMPage();
-      await pm.pimPage.navigateToAddEmployee();
-      await pm.pimPage.addEmployee(firstName, lastName, null, randomID);
-      await pm.pimPage.saveEmployeeDetails();
+    const employee = await test.step(`Arrange: create employee "${name.firstName} ${name.lastName}" via the API`, async () => {
+      return testData.createEmployee(name);
+    });
+    const editedFirstName = `Edited${employee.firstName}`;
+    const editedLastName = `Edited${employee.lastName}`;
+    console.log("TC_EEF_001 editing empNumber:", employee.empNumber);
 
-      // The Add Employee form redirects straight to the new employee's
-      // Personal Details page - no need to search the Employee List for it.
-      // saveEmployeeDetails() only clicks submit and doesn't wait for that
-      // redirect itself (other Add Employee tests mask this with a fixed
-      // sleep instead) - wait for the URL explicitly rather than adding
-      // another arbitrary sleep here.
-      await pm.page.waitForURL(/empNumber\/\d+/);
-      const empNumber = empDetails.getEmpNumberFromUrl();
-      console.log("TC_EEF_001 editing empNumber:", empNumber);
+    await test.step("Act: open the employee's Personal Details page", async () => {
+      await empDetails.navigateToEmployee(String(employee.empNumber));
     });
 
     await test.step(`Act: change the name to "${editedFirstName} ${editedLastName}" and save`, async () => {

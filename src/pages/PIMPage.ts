@@ -38,7 +38,7 @@ export default class PIMPage {
     firstName: string,
     lastName: string,
     middleName: string | null,
-    randomID: string,
+    employeeId: string,
   ) {
     await this.locators.firstNameInput.fill(firstName);
     await this.locators.lastNameInput.fill(lastName);
@@ -47,13 +47,14 @@ export default class PIMPage {
       await this.locators.middleNameInput.fill(middleName);
     }
 
+    // The form pre-fills this field with the next free number, and it can
+    // arrive AFTER the page looks ready. Wait for it first: filling sooner
+    // lets the late pre-fill overwrite our id, and an employee without our
+    // marker id is one the cleanup can never find.
     await this.actions.waitForVisible(this.locators.employeeIdInput);
-    const existingValue = await this.locators.employeeIdInput.inputValue();
-    // Append the randomID to the existing value
-    const updatedValue = existingValue + randomID;
-
-    // Fill the input field with the updated value
-    await this.locators.employeeIdInput.fill(updatedValue);
+    await expect(this.locators.employeeIdInput).not.toHaveValue("");
+    await this.locators.employeeIdInput.fill(employeeId);
+    await expect(this.locators.employeeIdInput).toHaveValue(employeeId);
   }
 
   async saveEmployeeDetails() {

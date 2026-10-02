@@ -95,7 +95,7 @@ const TEST_ID_PATTERN = /^([A-Z0-9_]+):\s/;
 
 /**
  * Tally passed/failed per QA test type (Smoke / Functional / Negative /
- * Navigation), keyed off the Test ID embedded in each spec's title
+ * Navigation / Unit), keyed off the Test ID embedded in each spec's title
  * ("TC_CEF_005: Add Employee Shows Required..." -> "TC_CEF_005"). A Test ID
  * with no entry in TEST_TYPE_BY_ID falls into "Other" rather than crashing
  * the notification - that's the signal the table is stale.
@@ -115,7 +115,7 @@ function tallyByTestType(suites = [], types = new Map()) {
   return types;
 }
 
-const TYPE_ORDER = ["Smoke", "Functional", "Negative", "Navigation"];
+const TYPE_ORDER = ["Smoke", "Functional", "Negative", "Navigation", "Unit"];
 
 function sortedTypes(types) {
   const known = TYPE_ORDER.filter((t) => types.has(t));

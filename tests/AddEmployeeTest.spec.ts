@@ -1,14 +1,9 @@
-import PomManager from "../src/pages/PomManager";
-import { faker } from "@faker-js/faker";
-import { test } from "@playwright/test";
+import { test } from "./fixtures";
 import { getAdminCredentials } from "../src/config/credentials";
 
-let pm: PomManager;
-
 test.describe("Login Tests", () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ pm }) => {
     const admin = getAdminCredentials();
-    pm = new PomManager(page);
     await test.step("Setup: log in as admin and land on the Dashboard", async () => {
       await pm.loginPage.navigate();
       await pm.loginPage.login(admin.username, admin.password);
@@ -16,11 +11,15 @@ test.describe("Login Tests", () => {
     });
   });
 
-  test("TC_CEF_001: Add Employee Without Middle Name", async () => {
+  // These tests ARE about the Add Employee form, so they create through the UI
+  // (the API would skip the very thing under test). Their employees get a
+  // tracked marker id from testData.employeeId(), and the fixture deletes
+  // them when the test ends - even if it fails before the app answers.
+
+  test("TC_CEF_001: Add Employee Without Middle Name", async ({ pm, testData }) => {
     console.log("TC_CEF_001");
-    const firstName = faker.person.fullName();
-    const lastName = faker.person.lastName();
-    const randomID = faker.string.alphanumeric(3);
+    const { firstName, lastName } = testData.employeeName();
+    const employeeId = testData.employeeId();
 
     await test.step("Act: open PIM and confirm the PIM page", async () => {
       await pm.pimPage.navigatetoPIMPage();
@@ -33,7 +32,7 @@ test.describe("Login Tests", () => {
     });
 
     await test.step(`Act: fill "${firstName} ${lastName}" (no middle name) and save`, async () => {
-      await pm.pimPage.addEmployee(firstName, lastName, null, randomID);
+      await pm.pimPage.addEmployee(firstName, lastName, null, employeeId);
       await pm.pimPage.saveEmployeeDetails();
       await pm.pimPage.waitForEmployeeSaved();
     });
@@ -43,12 +42,10 @@ test.describe("Login Tests", () => {
     });
   });
 
-  test("TC_CEF_002: Add Employee With Middle Name", async () => {
+  test("TC_CEF_002: Add Employee With Middle Name", async ({ pm, testData }) => {
     console.log("TC_CEF_002");
-    const firstName = faker.person.fullName();
-    const lastName = faker.person.lastName();
-    const middleName = faker.person.middleName();
-    const randomID = faker.string.alphanumeric(3);
+    const { firstName, middleName, lastName } = testData.employeeName();
+    const employeeId = testData.employeeId();
 
     await test.step("Act: open PIM and confirm the PIM page", async () => {
       await pm.pimPage.navigatetoPIMPage();
@@ -61,7 +58,7 @@ test.describe("Login Tests", () => {
     });
 
     await test.step(`Act: fill "${firstName} ${middleName} ${lastName}" and save`, async () => {
-      await pm.pimPage.addEmployee(firstName, lastName, middleName, randomID);
+      await pm.pimPage.addEmployee(firstName, lastName, middleName, employeeId);
       await pm.pimPage.saveEmployeeDetails();
       await pm.pimPage.waitForEmployeeSaved();
     });
@@ -71,23 +68,14 @@ test.describe("Login Tests", () => {
     });
   });
 
-  test("TC_CEF_003: Create Employee With Enabled Login Credentials", async () => {
+  test("TC_CEF_003: Create Employee With Enabled Login Credentials", async ({ pm, testData }) => {
     console.log("TC_CEF_003");
     // Unique data per test - a shared username across tests risks a
-    // duplicate-username collision with whatever another test in this same
-    // file just created (this collision is exactly what was causing the
-    // next test to log into THIS test's account instead of its own).
-    const firstName = faker.person.fullName();
-    const lastName = faker.person.lastName();
-    const middleName = faker.person.middleName();
-    const randomID = faker.string.alphanumeric(3);
-    const userName = faker.internet.username();
-    // The form refuses to save a password with no digit ("Your password must
-    // contain minimum 1 number" - confirmed from a failed run's page
-    // snapshot), and faker.internet.password() is random, so ~30% of the
-    // time it has none and Save silently does nothing. Build the password so
-    // it always has one.
-    const passWord = "Aa1" + faker.string.alphanumeric(4);
+    // duplicate-username collision with whatever another test just created.
+    const { firstName, middleName, lastName } = testData.employeeName();
+    const employeeId = testData.employeeId();
+    const userName = testData.username();
+    const passWord = testData.password();
 
     await test.step("Act: open PIM and confirm the PIM page", async () => {
       await pm.pimPage.navigatetoPIMPage();
@@ -100,7 +88,7 @@ test.describe("Login Tests", () => {
     });
 
     await test.step(`Act: fill the employee plus login "${userName}" (Enabled) and save`, async () => {
-      await pm.pimPage.addEmployee(firstName, lastName, middleName, randomID);
+      await pm.pimPage.addEmployee(firstName, lastName, middleName, employeeId);
       await pm.pimPage.AddEmployeeLoginCredentials(userName, passWord);
       await pm.pimPage.DisableLoginCredentialStatus(false);
       await pm.pimPage.saveEmployeeDetails();
@@ -117,16 +105,12 @@ test.describe("Login Tests", () => {
     });
   });
 
-  test("TC_CEF_004: Create Employee With Disabled Login Credentials", async () => {
+  test("TC_CEF_004: Create Employee With Disabled Login Credentials", async ({ pm, testData }) => {
     console.log("TC_CEF_004");
-    const firstName = faker.person.fullName();
-    const lastName = faker.person.lastName();
-    const middleName = faker.person.middleName();
-    const randomID = faker.string.alphanumeric(3);
-    const userName = faker.internet.username();
-    // Always includes a digit - see TC_CEF_003 for why a random faker
-    // password can't be trusted to.
-    const passWord = "Aa1" + faker.string.alphanumeric(4);
+    const { firstName, middleName, lastName } = testData.employeeName();
+    const employeeId = testData.employeeId();
+    const userName = testData.username();
+    const passWord = testData.password();
 
     await test.step("Act: open PIM and confirm the PIM page", async () => {
       await pm.pimPage.navigatetoPIMPage();
@@ -139,7 +123,7 @@ test.describe("Login Tests", () => {
     });
 
     await test.step(`Act: fill the employee plus login "${userName}" (Disabled) and save`, async () => {
-      await pm.pimPage.addEmployee(firstName, lastName, middleName, randomID);
+      await pm.pimPage.addEmployee(firstName, lastName, middleName, employeeId);
       await pm.pimPage.AddEmployeeLoginCredentials(userName, passWord);
       await pm.pimPage.DisableLoginCredentialStatus(true);
       await pm.pimPage.saveEmployeeDetails();
@@ -156,11 +140,11 @@ test.describe("Login Tests", () => {
     });
   });
 
-  test("TC_CEF_005: Add Employee Shows Required Field Errors When Name Is Blank", async () => {
+  test("TC_CEF_005: Add Employee Shows Required Field Errors When Name Is Blank", async ({ pm }) => {
     console.log("TC_CEF_005");
-    // No faker data - this test never fills the form, so it never creates
-    // an employee and needs no cleanup. It only submits it blank and
-    // checks the client-side validation fires.
+    // No data - this test never fills the form, so it never creates an
+    // employee and needs no cleanup. It only submits it blank and checks the
+    // client-side validation fires.
     await test.step("Act: open PIM and confirm the PIM page", async () => {
       await pm.pimPage.navigatetoPIMPage();
       await pm.pimPage.validatePIMPagePath("PIM");
@@ -175,7 +159,7 @@ test.describe("Login Tests", () => {
     });
   });
 
-  test("TC_CEF_006: Cancel Add Employee Returns To Employee List", async () => {
+  test("TC_CEF_006: Cancel Add Employee Returns To Employee List", async ({ pm }) => {
     console.log("TC_CEF_006");
     // Also creates nothing - opens the Add Employee form, cancels out of
     // it, and confirms we land back on the Employee List.

@@ -15,6 +15,7 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 
 - **Locator Library + Page Object Model** — every raw selector lives in `locators/*.locators.ts`, kept separate from the Page Objects (`src/pages/`) that hold the actual behavior. See [ARCHITECTURE.md](ARCHITECTURE.md) for the full pattern.
 - **TypeScript throughout** — Locators, Page Objects, and config are fully typed; `tsc --noEmit` runs clean and has already caught one real bug (a `faker` API misuse that was silently generating passwords with the wrong length).
+- **Independent tests that clean up after themselves** — each test creates its own marked data (employees get a recognisable `QAR…` id), prerequisites are created through the API rather than another feature's UI, everything is deleted after each test (pass *or* fail), and stale leftovers from crashed runs are purged before a run. The purge only ever deletes records it can prove are the suite's own. See [ARCHITECTURE.md §11](ARCHITECTURE.md#11-test-data-lifecycle-independence-setup-teardown-purge).
 - **`PomManager`** — a single entry point that wires up all page objects, so tests instantiate one manager instead of many pages.
 - **`CommonActions` wrapper** — shared, reusable Playwright interactions (`getText`, `waitForVisible`, `navigateSidePanel`, …) operating on Locator objects, so waiting logic lives in one place.
 - **Web-first waiting** — reads/verifications go through auto-retrying `expect(locator).toBeVisible()`; actions rely on Playwright's built-in auto-waiting (no brittle fixed sleeps in the page layer).
@@ -51,6 +52,12 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 │   │   ├── config.ts         # baseUrl (env-overridable), timeout - no secrets
 │   │   ├── credentials.ts    # credential getters, reads .env
 │   │   └── testTypes.json    # Test ID -> QA Type map (Discord tally + Excel reference)
+│   ├── api/
+│   │   └── OrangeHrmApi.ts   # own-session API client used for test setup and cleanup
+│   ├── testData/             # test-data lifecycle: marker ids, per-test cleanup, pre-run purge
+│   │   ├── ids.ts
+│   │   ├── purge.ts
+│   │   └── TestData.ts
 │   └── pages/                # Page Object Model - behavior only
 │       ├── PomManager.ts      # Aggregates all page objects (single entry point)
 │       ├── LoginPage.ts       # Login flow + validation
@@ -60,13 +67,15 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 ├── utils/
 │   └── commonActions.ts   # Reusable Playwright interaction wrappers (locator-based)
 ├── tests/                 # Test specs
+│   ├── fixtures.ts        # the suite's `test`: per-test `pm` + `testData`, pre-run purge
 │   ├── Login.spec.ts
 │   ├── Navigation.spec.ts
 │   ├── AddEmployeeTest.spec.ts
 │   ├── EditEmployeeTest.spec.ts
 │   ├── SearchEmployeeTest.spec.ts
 │   ├── DeleteEmployeeTest.spec.ts
-│   └── AddUserTest.spec.ts
+│   ├── AddUserTest.spec.ts
+│   └── TestDataSafetyTest.spec.ts   # offline tests of the cleanup's own safety guards
 ├── scripts/
 │   ├── notify-discord.mjs     # posts a run summary to Discord via webhook
 │   └── test-and-notify.mjs    # runs the suite locally, then always notifies
@@ -130,7 +139,7 @@ pnpm exec playwright test -g "TC_LOGIN_001"
 
 ## 💬 Discord notifications
 
-A pass/fail summary posts to a Discord channel after every CI run, and after `pnpm test:notify` locally - branch, commit, pass/fail/flaky/skipped counts, duration, a per-QA-Type tally (Smoke / Functional / Negative / Navigation), and the zipped HTML report attached so it's one click away with no GitHub login needed.
+A pass/fail summary posts to a Discord channel after every CI run, and after `pnpm test:notify` locally - branch, commit, pass/fail/flaky/skipped counts, duration, a per-QA-Type tally (Smoke / Functional / Negative / Navigation / Unit), and the zipped HTML report attached so it's one click away with no GitHub login needed.
 
 This is entirely optional and safe to ignore: with no webhook configured, `scripts/notify-discord.mjs` logs that it's skipping and exits 0 - it never fails a build.
 
