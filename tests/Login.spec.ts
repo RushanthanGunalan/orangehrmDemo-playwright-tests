@@ -11,8 +11,17 @@ test.describe("Login Tests", () => {
 
   test("TC_LOGIN_001: Verify Successful Login With Valid Credentials", async () => {
     const admin = getAdminCredentials();
-    await pm.loginPage.navigate();
-    await pm.loginPage.login(admin.username, admin.password);
-    await pm.loginPage.assertLoginValidation("Dashboard");
+
+    await test.step("Act: open the login page", async () => {
+      await pm.loginPage.navigate();
+    });
+
+    await test.step("Act: log in with the admin credentials", async () => {
+      await pm.loginPage.login(admin.username, admin.password);
+    });
+
+    await test.step("Assert: the Dashboard is shown", async () => {
+      await pm.loginPage.assertLoginValidation("Dashboard");
+    });
   });
 });

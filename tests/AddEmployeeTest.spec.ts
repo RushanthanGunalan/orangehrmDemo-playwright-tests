@@ -9,9 +9,11 @@ test.describe("Login Tests", () => {
   test.beforeEach(async ({ page }) => {
     const admin = getAdminCredentials();
     pm = new PomManager(page);
-    await pm.loginPage.navigate();
-    await pm.loginPage.login(admin.username, admin.password);
-    await pm.loginPage.assertLoginValidation("Dashboard");
+    await test.step("Setup: log in as admin and land on the Dashboard", async () => {
+      await pm.loginPage.navigate();
+      await pm.loginPage.login(admin.username, admin.password);
+      await pm.loginPage.assertLoginValidation("Dashboard");
+    });
   });
 
   test("TC_CEF_001: Add Employee Without Middle Name", async () => {
@@ -20,14 +22,25 @@ test.describe("Login Tests", () => {
     const lastName = faker.person.lastName();
     const randomID = faker.string.alphanumeric(3);
 
-    await pm.pimPage.navigatetoPIMPage();
-    await pm.pimPage.assertPIMPage();
-    await pm.pimPage.validatePIMPagePath("PIM");
-    await pm.pimPage.navigateToAddEmployee();
-    await pm.pimPage.addEmployee(firstName, lastName, null, randomID);
-    await pm.pimPage.saveEmployeeDetails();
-    await pm.pimPage.waitForEmployeeSaved();
-    await pm.pimPage.validateAddedEmployeeDetails(firstName, lastName);
+    await test.step("Act: open PIM and confirm the PIM page", async () => {
+      await pm.pimPage.navigatetoPIMPage();
+      await pm.pimPage.assertPIMPage();
+      await pm.pimPage.validatePIMPagePath("PIM");
+    });
+
+    await test.step("Act: open the Add Employee form", async () => {
+      await pm.pimPage.navigateToAddEmployee();
+    });
+
+    await test.step(`Act: fill "${firstName} ${lastName}" (no middle name) and save`, async () => {
+      await pm.pimPage.addEmployee(firstName, lastName, null, randomID);
+      await pm.pimPage.saveEmployeeDetails();
+      await pm.pimPage.waitForEmployeeSaved();
+    });
+
+    await test.step("Assert: the new employee's details show the entered name", async () => {
+      await pm.pimPage.validateAddedEmployeeDetails(firstName, lastName);
+    });
   });
 
   test("TC_CEF_002: Add Employee With Middle Name", async () => {
@@ -37,14 +50,25 @@ test.describe("Login Tests", () => {
     const middleName = faker.person.middleName();
     const randomID = faker.string.alphanumeric(3);
 
-    await pm.pimPage.navigatetoPIMPage();
-    await pm.pimPage.assertPIMPage();
-    await pm.pimPage.validatePIMPagePath("PIM");
-    await pm.pimPage.navigateToAddEmployee();
-    await pm.pimPage.addEmployee(firstName, lastName, middleName, randomID);
-    await pm.pimPage.saveEmployeeDetails();
-    await pm.pimPage.waitForEmployeeSaved();
-    await pm.pimPage.validateAddedEmployeeDetails(firstName, lastName);
+    await test.step("Act: open PIM and confirm the PIM page", async () => {
+      await pm.pimPage.navigatetoPIMPage();
+      await pm.pimPage.assertPIMPage();
+      await pm.pimPage.validatePIMPagePath("PIM");
+    });
+
+    await test.step("Act: open the Add Employee form", async () => {
+      await pm.pimPage.navigateToAddEmployee();
+    });
+
+    await test.step(`Act: fill "${firstName} ${middleName} ${lastName}" and save`, async () => {
+      await pm.pimPage.addEmployee(firstName, lastName, middleName, randomID);
+      await pm.pimPage.saveEmployeeDetails();
+      await pm.pimPage.waitForEmployeeSaved();
+    });
+
+    await test.step("Assert: the new employee's details show the entered name", async () => {
+      await pm.pimPage.validateAddedEmployeeDetails(firstName, lastName);
+    });
   });
 
   test("TC_CEF_003: Create Employee With Enabled Login Credentials", async () => {
@@ -58,20 +82,39 @@ test.describe("Login Tests", () => {
     const middleName = faker.person.middleName();
     const randomID = faker.string.alphanumeric(3);
     const userName = faker.internet.username();
-    const passWord = faker.internet.password({ length: 7 });
+    // The form refuses to save a password with no digit ("Your password must
+    // contain minimum 1 number" - confirmed from a failed run's page
+    // snapshot), and faker.internet.password() is random, so ~30% of the
+    // time it has none and Save silently does nothing. Build the password so
+    // it always has one.
+    const passWord = "Aa1" + faker.string.alphanumeric(4);
 
-    await pm.pimPage.navigatetoPIMPage();
-    await pm.pimPage.assertPIMPage();
-    await pm.pimPage.validatePIMPagePath("PIM");
-    await pm.pimPage.navigateToAddEmployee();
-    await pm.pimPage.addEmployee(firstName, lastName, middleName, randomID);
-    await pm.pimPage.AddEmployeeLoginCredentials(userName, passWord);
-    await pm.pimPage.DisableLoginCredentialStatus(false);
-    await pm.pimPage.saveEmployeeDetails();
-    await pm.pimPage.waitForEmployeeSaved();
-    await pm.commonActions.isLoggedOut();
-    await pm.loginPage.login(userName, passWord);
-    await pm.pimPage.assertCreatedEmployeeCredential(firstName, lastName);
+    await test.step("Act: open PIM and confirm the PIM page", async () => {
+      await pm.pimPage.navigatetoPIMPage();
+      await pm.pimPage.assertPIMPage();
+      await pm.pimPage.validatePIMPagePath("PIM");
+    });
+
+    await test.step("Act: open the Add Employee form", async () => {
+      await pm.pimPage.navigateToAddEmployee();
+    });
+
+    await test.step(`Act: fill the employee plus login "${userName}" (Enabled) and save`, async () => {
+      await pm.pimPage.addEmployee(firstName, lastName, middleName, randomID);
+      await pm.pimPage.AddEmployeeLoginCredentials(userName, passWord);
+      await pm.pimPage.DisableLoginCredentialStatus(false);
+      await pm.pimPage.saveEmployeeDetails();
+      await pm.pimPage.waitForEmployeeSaved();
+    });
+
+    await test.step(`Act: log out and log back in as "${userName}"`, async () => {
+      await pm.commonActions.isLoggedOut();
+      await pm.loginPage.login(userName, passWord);
+    });
+
+    await test.step("Assert: the profile shows the new employee's name", async () => {
+      await pm.pimPage.assertCreatedEmployeeCredential(firstName, lastName);
+    });
   });
 
   test("TC_CEF_004: Create Employee With Disabled Login Credentials", async () => {
@@ -81,20 +124,36 @@ test.describe("Login Tests", () => {
     const middleName = faker.person.middleName();
     const randomID = faker.string.alphanumeric(3);
     const userName = faker.internet.username();
-    const passWord = faker.internet.password({ length: 7 });
+    // Always includes a digit - see TC_CEF_003 for why a random faker
+    // password can't be trusted to.
+    const passWord = "Aa1" + faker.string.alphanumeric(4);
 
-    await pm.pimPage.navigatetoPIMPage();
-    await pm.pimPage.assertPIMPage();
-    await pm.pimPage.validatePIMPagePath("PIM");
-    await pm.pimPage.navigateToAddEmployee();
-    await pm.pimPage.addEmployee(firstName, lastName, middleName, randomID);
-    await pm.pimPage.AddEmployeeLoginCredentials(userName, passWord);
-    await pm.pimPage.DisableLoginCredentialStatus(true);
-    await pm.pimPage.saveEmployeeDetails();
-    await pm.pimPage.waitForEmployeeSaved();
-    await pm.commonActions.isLoggedOut();
-    await pm.loginPage.login(userName, passWord);
-    await pm.pimPage.assertDisabledLogin("Account disabled");
+    await test.step("Act: open PIM and confirm the PIM page", async () => {
+      await pm.pimPage.navigatetoPIMPage();
+      await pm.pimPage.assertPIMPage();
+      await pm.pimPage.validatePIMPagePath("PIM");
+    });
+
+    await test.step("Act: open the Add Employee form", async () => {
+      await pm.pimPage.navigateToAddEmployee();
+    });
+
+    await test.step(`Act: fill the employee plus login "${userName}" (Disabled) and save`, async () => {
+      await pm.pimPage.addEmployee(firstName, lastName, middleName, randomID);
+      await pm.pimPage.AddEmployeeLoginCredentials(userName, passWord);
+      await pm.pimPage.DisableLoginCredentialStatus(true);
+      await pm.pimPage.saveEmployeeDetails();
+      await pm.pimPage.waitForEmployeeSaved();
+    });
+
+    await test.step(`Act: log out and try to log in as "${userName}"`, async () => {
+      await pm.commonActions.isLoggedOut();
+      await pm.loginPage.login(userName, passWord);
+    });
+
+    await test.step('Assert: the login is rejected with "Account disabled"', async () => {
+      await pm.pimPage.assertDisabledLogin("Account disabled");
+    });
   });
 
   test("TC_CEF_005: Add Employee Shows Required Field Errors When Name Is Blank", async () => {
@@ -102,20 +161,39 @@ test.describe("Login Tests", () => {
     // No faker data - this test never fills the form, so it never creates
     // an employee and needs no cleanup. It only submits it blank and
     // checks the client-side validation fires.
-    await pm.pimPage.navigatetoPIMPage();
-    await pm.pimPage.validatePIMPagePath("PIM");
-    await pm.pimPage.navigateToAddEmployee();
-    await pm.pimPage.assertRequiredFieldErrorsShown();
+    await test.step("Act: open PIM and confirm the PIM page", async () => {
+      await pm.pimPage.navigatetoPIMPage();
+      await pm.pimPage.validatePIMPagePath("PIM");
+    });
+
+    await test.step("Act: open the Add Employee form", async () => {
+      await pm.pimPage.navigateToAddEmployee();
+    });
+
+    await test.step('Act + Assert: submit blank and see "Required" under First and Last Name', async () => {
+      await pm.pimPage.assertRequiredFieldErrorsShown();
+    });
   });
 
   test("TC_CEF_006: Cancel Add Employee Returns To Employee List", async () => {
     console.log("TC_CEF_006");
     // Also creates nothing - opens the Add Employee form, cancels out of
     // it, and confirms we land back on the Employee List.
-    await pm.pimPage.navigatetoPIMPage();
-    await pm.pimPage.validatePIMPagePath("PIM");
-    await pm.pimPage.navigateToAddEmployee();
-    await pm.pimPage.cancelAddEmployee();
-    await pm.pimPage.assertOnEmployeeList();
+    await test.step("Act: open PIM and confirm the PIM page", async () => {
+      await pm.pimPage.navigatetoPIMPage();
+      await pm.pimPage.validatePIMPagePath("PIM");
+    });
+
+    await test.step("Act: open the Add Employee form", async () => {
+      await pm.pimPage.navigateToAddEmployee();
+    });
+
+    await test.step("Act: click Cancel", async () => {
+      await pm.pimPage.cancelAddEmployee();
+    });
+
+    await test.step("Assert: back on the Employee List", async () => {
+      await pm.pimPage.assertOnEmployeeList();
+    });
   });
 });

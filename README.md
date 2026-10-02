@@ -44,7 +44,8 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 │   └── components/          # shared elements reused across pages
 │       ├── sidebarNav.locators.ts
 │       ├── topBar.locators.ts
-│       └── toast.locators.ts
+│       ├── toast.locators.ts
+│       └── formField.locators.ts
 ├── src/
 │   ├── config/
 │   │   ├── config.ts         # baseUrl (env-overridable), timeout - no secrets
@@ -64,7 +65,8 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 │   ├── AddEmployeeTest.spec.ts
 │   ├── EditEmployeeTest.spec.ts
 │   ├── SearchEmployeeTest.spec.ts
-│   └── DeleteEmployeeTest.spec.ts
+│   ├── DeleteEmployeeTest.spec.ts
+│   └── AddUserTest.spec.ts
 ├── scripts/
 │   ├── notify-discord.mjs     # posts a run summary to Discord via webhook
 │   └── test-and-notify.mjs    # runs the suite locally, then always notifies

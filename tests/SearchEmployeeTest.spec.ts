@@ -9,9 +9,11 @@ test.describe("Search Employee", () => {
   test.beforeEach(async ({ page }) => {
     const admin = getAdminCredentials();
     pm = new PomManager(page);
-    await pm.loginPage.navigate();
-    await pm.loginPage.login(admin.username, admin.password);
-    await pm.loginPage.assertLoginValidation("Dashboard");
+    await test.step("Setup: log in as admin and land on the Dashboard", async () => {
+      await pm.loginPage.navigate();
+      await pm.loginPage.login(admin.username, admin.password);
+      await pm.loginPage.assertLoginValidation("Dashboard");
+    });
   });
 
   test("TC_SEF_001: Search Employee By Name Shows Matching Result", async () => {
@@ -31,19 +33,26 @@ test.describe("Search Employee", () => {
     const lastName = faker.person.lastName();
     const randomID = faker.string.alphanumeric(3);
 
-    await pm.pimPage.navigatetoPIMPage();
-    await pm.pimPage.navigateToAddEmployee();
-    await pm.pimPage.addEmployee(firstName, lastName, null, randomID);
-    await pm.pimPage.saveEmployeeDetails();
-    await pm.page.waitForURL(/empNumber\/\d+/);
-    const empNumber = pm.employeePersonalDetailsPage.getEmpNumberFromUrl();
-    console.log("TC_SEF_001 searching for empNumber:", empNumber);
+    await test.step(`Arrange: create employee "${firstName} ${lastName}" in PIM`, async () => {
+      await pm.pimPage.navigatetoPIMPage();
+      await pm.pimPage.navigateToAddEmployee();
+      await pm.pimPage.addEmployee(firstName, lastName, null, randomID);
+      await pm.pimPage.saveEmployeeDetails();
+      await pm.page.waitForURL(/empNumber\/\d+/);
+      const empNumber = pm.employeePersonalDetailsPage.getEmpNumberFromUrl();
+      console.log("TC_SEF_001 searching for empNumber:", empNumber);
+    });
 
-    await pm.pimPage.navigatetoPIMPage();
-    // Search by lastName alone (a single word) - see searchEmployeeByName()
-    // for why the full "first last" string is unreliable here.
-    await pm.pimPage.searchEmployeeByName(lastName);
-    await pm.pimPage.assertEmployeeFoundInList(lastName);
+    await test.step(`Act: search the Employee List for "${lastName}"`, async () => {
+      await pm.pimPage.navigatetoPIMPage();
+      // Search by lastName alone (a single word) - see searchEmployeeByName()
+      // for why the full "first last" string is unreliable here.
+      await pm.pimPage.searchEmployeeByName(lastName);
+    });
+
+    await test.step("Assert: exactly one matching row is shown", async () => {
+      await pm.pimPage.assertEmployeeFoundInList(lastName);
+    });
 
     // No cleanup delete here on purpose: this test's scope is "search
     // finds the record", and a create+search+delete chain runs long enough

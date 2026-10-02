@@ -2,7 +2,7 @@
 
 ## 1. What this repo is
 
-A small Playwright + TypeScript regression suite against the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) - login, side-panel navigation, and the PIM "Add Employee", "Edit Employee", "Search Employee", and "Delete Employee" flows (including login-credential creation, blank-form validation, cancel-out, and account-status checks). 11 tests across 6 spec files. See [README.md](README.md) for day-to-day commands.
+A small Playwright + TypeScript regression suite against the [OrangeHRM open-source demo](https://opensource-demo.orangehrmlive.com/) - login, side-panel navigation, and the PIM "Add Employee", "Edit Employee", "Search Employee", and "Delete Employee" flows (including login-credential creation, blank-form validation, cancel-out, and account-status checks) plus Admin User Management (user creation first; the rest of its CRUD is being added one case at a time). 12 tests across 7 spec files. See [README.md](README.md) for day-to-day commands.
 
 This is a portfolio-scale project, not an enterprise QA suite - so it keeps a light version of the patterns you'd see in the author's larger Playwright repos rather than the full versions: a small four-value QA Type tag (Smoke / Functional / Negative / Navigation, see §8 and §10) instead of a large taxonomy, one Discord notification step instead of a per-type CI dispatch matrix, and one Excel test-suite reference regenerated on demand instead of a maintained external tracker. Just the parts that earn their keep at this size, on top of a clean Locator Library split and credentials out of source.
 
@@ -28,7 +28,8 @@ locators/
   components/
     sidebarNav.locators.ts       shared - the left nav menu, used by Admin + PIM
     topBar.locators.ts           shared - profile dropdown / logout / login heading
-    toast.locators.ts            shared - the success toast, used by Edit + Delete
+    toast.locators.ts            shared - the success toast, used by Edit + Delete + Add User
+    formField.locators.ts        shared - label-anchored inputs, custom dropdowns, autocomplete (PIM + Admin)
 src/
   config/
     config.ts                    baseUrl (env-overridable getter), timeout
@@ -42,6 +43,7 @@ utils/
 tests/
   Login.spec.ts / Navigation.spec.ts / AddEmployeeTest.spec.ts
   EditEmployeeTest.spec.ts / SearchEmployeeTest.spec.ts / DeleteEmployeeTest.spec.ts
+  AddUserTest.spec.ts
 scripts/
   notify-discord.mjs              posts a run summary to Discord - see §10
   test-and-notify.mjs              runs the suite locally, then always notifies
@@ -130,7 +132,9 @@ What changed as a result:
 
 **The "implicit wait" is one central setting, `config.waitTimeout` (60s, `WAIT_TIMEOUT_MS` overrides it).** Playwright has no global implicit-wait switch: actions auto-wait but with no cap of their own (they hang until the whole test times out), and web-first assertions default to only 5s. `playwright.config.ts` therefore sets `use.actionTimeout`, `use.navigationTimeout` and `expect.timeout` from that one value, and `CommonActions.defaultTimeout` reads it too - so every element lookup, click/fill, assertion and navigation gets the same wait. The per-call `{ timeout: 10000 }`/`30000` overrides that used to undercut it were removed from the page objects and specs. It started at 30s and was raised to 60s after a run where the employee's Personal Details heading was present but empty for a full 30s (the page loaded, the data behind it didn't). The per-test `timeout` (360s) is sized to fit several of these waits back to back, since one flow chains 5+ of them.
 
-**`TC_CEF_003`/`TC_CEF_004` used to fail with "Invalid credentials" - the cause was a fixed sleep, not site flakiness.** Both create an employee with a login, log out, and immediately log back in as that user. They waited a fixed 5s after Save; on a slow demo the save hadn't finished, so the account didn't exist yet and the login was rejected (`TC_CEF_004` saw "Invalid credentials" instead of "Account disabled"). It looked intermittent only because it depended on how fast the demo was that day. All four Add specs now call `PIMPage.waitForEmployeeSaved()` (waits for the redirect to the new employee's page, which only happens once the server has saved) instead of `waitForTimeout`, and both tests passed first try after the change. If they fail with "Invalid credentials" again, suspect the save not completing rather than an eventually-consistent login.
+**`TC_CEF_003`/`TC_CEF_004` "flaked" because of their test data, not the site - the root cause is a password with no digit.** Both create an employee with a login, log out, and log back in as that user. The form refuses to save a password without a number ("Your password must contain minimum 1 number" appears under the field), and the tests used `faker.internet.password({ length: 7 })`, which is random: about 30% of the time (simulated: 29.8%) it contains no digit. Then Save does nothing, no account is created, and what the test sees depends on its version: the old fixed-sleep version logged out and tried a user that never existed ("Invalid credentials", or `TC_CEF_004` getting that instead of "Account disabled"); the current version times out on `waitForEmployeeSaved()` at the "fill ... and save" step. That is why it looked intermittent and why a retry usually "fixed" it - a retry just rolls a new random password.
+
+Proven, not assumed: forcing the digit-less password `Abcdefg` fails the test every time at that step with the on-page message above, and with the password built as `"Aa1" + 4 random alphanumerics` both tests passed 8 of 8 runs with retries off. (An earlier version of this note blamed the fixed sleep; replacing the sleeps with `PIMPage.waitForEmployeeSaved()` was still the right change - a sleep is a guess - but it wasn't the cause.) If a test here ever fails at a "...and save" step, read the page snapshot in `error-context.md` for an inline validation message before blaming the site.
 
 **A real race condition found while building Edit Employee, worth knowing about if this page gets touched again:** the Personal Details page's form renders pre-filled with the employee's current data, then silently re-fetches and re-populates that same data a moment later. Filling the fields immediately after the page loads (or right after creating the employee, since the Add flow redirects straight here) gets silently overwritten by that second population - the save still succeeds and shows "Successfully Updated", just with the *original* values instead of the edit. `EmployeePersonalDetailsPage.editName()` waits for network idle before filling to avoid this; a `not.toHaveValue("")` check does **not** catch it, since the field is already non-empty from the pre-fill.
 
@@ -146,7 +150,7 @@ What changed as a result:
 
 ## 8. Test naming
 
-Every test title is `"<Test ID>: <Test Case Title>"` - e.g. `"TC_CEF_001: Add Employee Without Middle Name"` - so a test is identifiable by ID alone (for cross-referencing a test plan, a bug report, a CI failure notification) while the title still reads clearly on its own in the HTML report or terminal output. IDs are grouped by feature area with a numeric suffix: `TC_LOGIN_*`, `TC_NAV_*`, `TC_CEF_*` ("Create Employee Form"), `TC_EEF_*` ("Edit Employee Form"), `TC_SEF_*` ("Search Employee Form"), `TC_DEF_*` ("Delete Employee Form"). Give a new test the next number in whichever prefix it belongs to, or a new prefix if it's a new feature area.
+Every test title is `"<Test ID>: <Test Case Title>"` - e.g. `"TC_CEF_001: Add Employee Without Middle Name"` - so a test is identifiable by ID alone (for cross-referencing a test plan, a bug report, a CI failure notification) while the title still reads clearly on its own in the HTML report or terminal output. IDs are grouped by feature area with a numeric suffix: `TC_LOGIN_*`, `TC_NAV_*`, `TC_CEF_*` ("Create Employee Form"), `TC_EEF_*` ("Edit Employee Form"), `TC_SEF_*` ("Search Employee Form"), `TC_DEF_*` ("Delete Employee Form"), `TC_UCF_*` ("User Creation Form" - Admin > User Management). Give a new test the next number in whichever prefix it belongs to, or a new prefix if it's a new feature area.
 
 ## 9. Extending the suite
 
@@ -155,7 +159,8 @@ Every test title is `"<Test ID>: <Test Case Title>"` - e.g. `"TC_CEF_001: Add Em
 3. Verify the case against the live app first, not just an assumption of what it should do.
 4. Title the test `"<Test ID>: <Test Case Title>"` (see §8).
 5. Never hardcode a credential in a spec - go through `src/config/credentials.ts` (see §5 for why this project's default isn't a throw).
-6. Add the new Test ID's QA Type to `src/config/testTypes.json` (see §10) so Discord's per-type tally and a regenerated Excel test-suite reference both stay accurate instead of silently bucketing the new test under "Other".
+6. Structure a longer test body as `test.step(...)` blocks (Arrange / Act / Assert), generating test data first so step titles can name the real values (employee name, username). Steps show up as a timed tree in the HTML report and trace viewer, and a failure is attributed to the step that broke - every spec follows this, including the login `beforeEach` ("Setup: ..."). Tests with no data to generate still use steps, named Act / Assert.
+7. Add the new Test ID's QA Type to `src/config/testTypes.json` (see §10) so Discord's per-type tally and a regenerated Excel test-suite reference both stay accurate instead of silently bucketing the new test under "Other".
 
 ## 10. Discord notifications & the Excel test-suite reference
 

@@ -2,20 +2,14 @@ import { Page, Locator } from "@playwright/test";
 import { sidebarNavLocators } from "./components/sidebarNav.locators";
 import { topBarLocators } from "./components/topBar.locators";
 import { toastLocators } from "./components/toast.locators";
+import {
+  inputGroupByLabel,
+  autocompleteOptionByText,
+} from "./components/formField.locators";
 
-/**
- * The Add Employee form's inputs have no name/id/placeholder at all
- * (verified live) except firstName/lastName/middleName - each one only has
- * a nearby <label> for a human to read. This anchors on that label text
- * instead of position, which is what the old nth-child chain was really
- * trying (and failing) to do.
- */
-function inputGroupByLabel(page: Page, labelText: string | RegExp): Locator {
-  return page
-    .locator(".oxd-input-group")
-    .filter({ has: page.locator("label", { hasText: labelText }) })
-    .locator("input");
-}
+// The Add Employee form's inputs have no name/id/placeholder at all
+// (verified live) except firstName/lastName/middleName, so they're found via
+// their <label> text with inputGroupByLabel() - see formField.locators.ts.
 
 export type PIMPageLocators = {
   breadcrumbHeading: Locator;
@@ -123,7 +117,7 @@ export function pimPageLocators(page: Page): PIMPageLocators {
     // fields (same .oxd-input-group wrapper structure, confirmed live).
     employeeNameSearchInput: inputGroupByLabel(page, "Employee Name"),
     autocompleteOptionByText: (name: string) =>
-      page.locator(".oxd-autocomplete-option", { hasText: name }),
+      autocompleteOptionByText(page, name),
     // Not exact: same icon-before-text pattern as "Add"/"Login" - this one
     // has no icon (verified live, plain text "Search"), but kept non-exact
     // for consistency and because it costs nothing here.
