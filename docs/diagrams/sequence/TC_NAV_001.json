@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_NAV_001: navigate to the Admin page",
+    "output": "docs/diagrams/html/TC_NAV_001.html",
+    "viewBox": [
+      1080,
+      537
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@github-personal:RushanthanGunalan/orangehrmDemo-playwright-tests.git",
+      "link_mode": "local-only",
+      "revision": "7dfb3a95b567ad412ba7019ac14dbc1f39bbf42d"
+    },
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_NAV_001",
+      "sources": [
+        {
+          "path": "tests/Navigation.spec.ts",
+          "line": 14,
+          "end_line": 23,
+          "label": "TC_NAV_001 test body"
+        },
+        {
+          "path": "tests/Navigation.spec.ts",
+          "line": 5,
+          "end_line": 12,
+          "label": "beforeEach: UI login"
+        }
+      ]
+    },
+    {
+      "id": "pageobjects",
+      "type": "backend",
+      "label": "Page objects",
+      "sublabel": "LoginPage, AdminPage",
+      "sources": [
+        {
+          "path": "src/pages/LoginPage.ts",
+          "line": 9,
+          "end_line": 36,
+          "label": "LoginPage methods"
+        },
+        {
+          "path": "src/pages/AdminPage.ts",
+          "line": 22,
+          "end_line": 120,
+          "label": "AdminPage methods"
+        }
+      ]
+    },
+    {
+      "id": "demo",
+      "type": "external",
+      "label": "OrangeHRM demo",
+      "sublabel": "public demo site",
+      "sources": [
+        {
+          "path": "src/config/config.ts",
+          "line": 14,
+          "end_line": 19,
+          "label": "baseUrl: public demo by default"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 459,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 175,
+      "label": "loginPage.login(admin)",
+      "variant": "default",
+      "note": "beforeEach: navigate, login, assert Dashboard"
+    },
+    {
+      "from": "pageobjects",
+      "to": "demo",
+      "y": 205,
+      "label": "sign in (UI)",
+      "variant": "default"
+    },
+    {
+      "from": "demo",
+      "to": "pageobjects",
+      "y": 235,
+      "label": "Dashboard",
+      "variant": "return"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 265,
+      "label": "adminPage.navigateToAdminPage()",
+      "variant": "default"
+    },
+    {
+      "from": "pageobjects",
+      "to": "demo",
+      "y": 295,
+      "label": "click Admin (UI)",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 325,
+      "label": "adminPage.assertAdminPage()",
+      "variant": "default"
+    },
+    {
+      "from": "pageobjects",
+      "to": "demo",
+      "y": 355,
+      "label": "read the breadcrumb (UI)",
+      "variant": "default"
+    },
+    {
+      "from": "demo",
+      "to": "pageobjects",
+      "y": 385,
+      "label": "Admin",
+      "variant": "return"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 415,
+      "label": "validateAdminPageIsLoaded(\"Admin\")",
+      "variant": "default",
+      "note": "reads the breadcrumb, then waits for /admin/viewSystemUsers"
+    },
+    {
+      "from": "pageobjects",
+      "to": "demo",
+      "y": 445,
+      "label": "wait for the Admin URL (UI)",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What it shows",
+      "items": [
+        "Log in, click Admin in the side panel, then confirm the breadcrumb and the URL"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Abridged on purpose",
+      "items": [
+        "Shows the calls that carry this test's meaning",
+        "Assertion-only helpers and most browser echoes are left out",
+        "Login, data creation and cleanup are shown in full in the three TC_UCF_001 diagrams"
+      ]
+    }
+  ]
+}

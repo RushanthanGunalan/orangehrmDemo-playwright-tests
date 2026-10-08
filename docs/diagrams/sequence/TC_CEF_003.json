@@ -1,0 +1,278 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_CEF_003: employee with an enabled login",
+    "output": "docs/diagrams/html/TC_CEF_003.html",
+    "viewBox": [
+      1080,
+      693
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@github-personal:RushanthanGunalan/orangehrmDemo-playwright-tests.git",
+      "link_mode": "local-only",
+      "revision": "7dfb3a95b567ad412ba7019ac14dbc1f39bbf42d"
+    },
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_CEF_003",
+      "sources": [
+        {
+          "path": "tests/AddEmployeeTest.spec.ts",
+          "line": 71,
+          "end_line": 106,
+          "label": "TC_CEF_003 test body"
+        },
+        {
+          "path": "tests/AddEmployeeTest.spec.ts",
+          "line": 5,
+          "end_line": 12,
+          "label": "beforeEach: UI login"
+        }
+      ]
+    },
+    {
+      "id": "pageobjects",
+      "type": "backend",
+      "label": "Page objects",
+      "sublabel": "pages + CommonActions",
+      "sources": [
+        {
+          "path": "src/pages/LoginPage.ts",
+          "line": 9,
+          "end_line": 36,
+          "label": "LoginPage methods"
+        },
+        {
+          "path": "src/pages/PIMPage.ts",
+          "line": 8,
+          "end_line": 206,
+          "label": "PIMPage methods"
+        },
+        {
+          "path": "utils/commonActions.ts",
+          "line": 17,
+          "end_line": 63,
+          "label": "CommonActions.isLoggedOut()"
+        }
+      ]
+    },
+    {
+      "id": "demo",
+      "type": "external",
+      "label": "OrangeHRM demo",
+      "sublabel": "public demo site",
+      "sources": [
+        {
+          "path": "src/config/config.ts",
+          "line": 14,
+          "end_line": 19,
+          "label": "baseUrl: public demo by default"
+        },
+        {
+          "path": "src/api/OrangeHrmApi.ts",
+          "line": 53,
+          "end_line": 205,
+          "label": "pim/employees API calls"
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "OrangeHrmApi",
+      "sublabel": "src/api",
+      "sources": [
+        {
+          "path": "src/api/OrangeHrmApi.ts",
+          "line": 53,
+          "end_line": 205,
+          "label": "create / find / delete employees"
+        }
+      ]
+    },
+    {
+      "id": "testdata",
+      "type": "backend",
+      "label": "TestData",
+      "sublabel": "src/testData",
+      "sources": [
+        {
+          "path": "src/testData/TestData.ts",
+          "line": 36,
+          "end_line": 127,
+          "label": "TestData: factories + cleanup"
+        }
+      ]
+    },
+    {
+      "id": "fixtures",
+      "type": "backend",
+      "label": "Fixtures",
+      "sublabel": "tests/fixtures.ts",
+      "sources": [
+        {
+          "path": "tests/fixtures.ts",
+          "line": 42,
+          "end_line": 93,
+          "label": "test.extend: pm, testData, adminApi"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 519,
+      "label": "Test"
+    },
+    {
+      "from": 556,
+      "to": 615,
+      "label": "Teardown"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 175,
+      "label": "loginPage.login(admin)",
+      "variant": "default",
+      "note": "beforeEach: navigate, login, assert Dashboard"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 205,
+      "label": "employeeName(), employeeId(), username(), password()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 235,
+      "label": "navigatetoPIMPage(), navigateToAddEmployee()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 265,
+      "label": "addEmployee(name, middle, id)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 295,
+      "label": "AddEmployeeLoginCredentials()",
+      "variant": "emphasis",
+      "note": "toggle Create Login Details, username, password, confirm"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 325,
+      "label": "DisableLoginCredentialStatus(false)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 355,
+      "label": "saveEmployeeDetails()",
+      "variant": "default"
+    },
+    {
+      "from": "pageobjects",
+      "to": "demo",
+      "y": 385,
+      "label": "click Save (UI)",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 415,
+      "label": "waitForEmployeeSaved()",
+      "variant": "default",
+      "note": "the save must finish before logging out"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 445,
+      "label": "commonActions.isLoggedOut()",
+      "variant": "default",
+      "note": "log out"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 475,
+      "label": "loginPage.login(newUser)",
+      "variant": "default",
+      "note": "log in as the employee just created"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 505,
+      "label": "assertCreatedEmployeeCredential()",
+      "variant": "default"
+    },
+    {
+      "from": "fixtures",
+      "to": "testdata",
+      "y": 571,
+      "label": "data.cleanup()",
+      "variant": "default",
+      "note": "runs after the test, pass or fail"
+    },
+    {
+      "from": "testdata",
+      "to": "api",
+      "y": 601,
+      "label": "deleteEmployees(ids)",
+      "variant": "default",
+      "note": "after findEmployees(id); GET and DELETE pim/employees; also removes any user"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What it shows",
+      "items": [
+        "An employee is created together with a login (Enabled), then the test logs out and tries that login",
+        "The result is the new user's own name in the profile"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Why waitForEmployeeSaved matters",
+      "items": [
+        "Logging out before the save finishes would try a user that does not exist yet",
+        "The password always has a digit: the form refuses to save one without"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Abridged on purpose",
+      "items": [
+        "Shows the calls that carry this test's meaning",
+        "Assertion-only helpers and most browser echoes are left out",
+        "Login, data creation and cleanup are shown in full in the three TC_UCF_001 diagrams"
+      ]
+    }
+  ]
+}

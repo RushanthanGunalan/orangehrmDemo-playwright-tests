@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_TDS_008: cleanup deletes only its own employees",
+    "output": "docs/diagrams/html/TC_TDS_008.html",
+    "viewBox": [
+      1080,
+      537
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@github-personal:RushanthanGunalan/orangehrmDemo-playwright-tests.git",
+      "link_mode": "local-only",
+      "revision": "7dfb3a95b567ad412ba7019ac14dbc1f39bbf42d"
+    },
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_TDS_008",
+      "sources": [
+        {
+          "path": "tests/TestDataSafetyTest.spec.ts",
+          "line": 149,
+          "end_line": 165,
+          "label": "TC_TDS_008 test body"
+        }
+      ]
+    },
+    {
+      "id": "testdata",
+      "type": "backend",
+      "label": "TestData",
+      "sublabel": "src/testData",
+      "sources": [
+        {
+          "path": "src/testData/TestData.ts",
+          "line": 36,
+          "end_line": 127,
+          "label": "TestData: factories + cleanup"
+        }
+      ]
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "FakeStore",
+      "sublabel": "in-memory stand-in",
+      "sources": [
+        {
+          "path": "tests/TestDataSafetyTest.spec.ts",
+          "line": 25,
+          "end_line": 55,
+          "label": "FakeStore: substring search, delete"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 459,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 175,
+      "label": "createEmployee()",
+      "variant": "emphasis"
+    },
+    {
+      "from": "testdata",
+      "to": "store",
+      "y": 205,
+      "label": "createEmployee({ marker id })",
+      "variant": "default"
+    },
+    {
+      "from": "store",
+      "to": "testdata",
+      "y": 235,
+      "label": "employee",
+      "variant": "return"
+    },
+    {
+      "from": "testdata",
+      "to": "spec",
+      "y": 265,
+      "label": "employee",
+      "variant": "return"
+    },
+    {
+      "from": "spec",
+      "to": "store",
+      "y": 295,
+      "label": "add() x 2",
+      "variant": "default",
+      "note": "another run's marked employee, and someone else's"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 325,
+      "label": "cleanup()",
+      "variant": "emphasis"
+    },
+    {
+      "from": "testdata",
+      "to": "store",
+      "y": 355,
+      "label": "findEmployees(id)",
+      "variant": "default"
+    },
+    {
+      "from": "store",
+      "to": "testdata",
+      "y": 385,
+      "label": "the hit",
+      "variant": "return"
+    },
+    {
+      "from": "testdata",
+      "to": "store",
+      "y": 415,
+      "label": "deleteEmployees([mine])",
+      "variant": "emphasis"
+    },
+    {
+      "from": "testdata",
+      "to": "spec",
+      "y": 445,
+      "label": "deleted 1, leaked none",
+      "variant": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What it checks",
+      "items": [
+        "Only the employee this test created is deleted; another run's marked employee and someone else's survive"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "No browser or network",
+      "items": [
+        "Runs offline; nothing real can be deleted"
+      ]
+    }
+  ]
+}

@@ -19,6 +19,23 @@ export function inputGroupByLabel(
 }
 
 /**
+ * The validation message under the field whose label contains labelText.
+ * Verified live on the Add User form: every field (including the custom
+ * dropdowns and the Employee Name autocomplete) is its own .oxd-input-group
+ * with at most one .oxd-input-field-error-message, which only exists after a
+ * failed submit - so zero matches means "no error shown", not "wrong locator".
+ */
+export function fieldErrorByLabel(
+  page: Page,
+  labelText: string | RegExp,
+): Locator {
+  return page
+    .locator(".oxd-input-group")
+    .filter({ has: page.locator("label", { hasText: labelText }) })
+    .locator(".oxd-input-field-error-message");
+}
+
+/**
  * The clickable box of a custom dropdown (User Role, Status, ...). These are
  * styled <div>s, not <select>s - selectOption() doesn't work on them. Click
  * this to open the list, then pick with optionByName().

@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_TDS_010: a failing cleanup never throws",
+    "output": "docs/diagrams/html/TC_TDS_010.html",
+    "viewBox": [
+      1080,
+      567
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@github-personal:RushanthanGunalan/orangehrmDemo-playwright-tests.git",
+      "link_mode": "local-only",
+      "revision": "7dfb3a95b567ad412ba7019ac14dbc1f39bbf42d"
+    },
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_TDS_010",
+      "sources": [
+        {
+          "path": "tests/TestDataSafetyTest.spec.ts",
+          "line": 182,
+          "end_line": 197,
+          "label": "TC_TDS_010 test body"
+        }
+      ]
+    },
+    {
+      "id": "testdata",
+      "type": "backend",
+      "label": "TestData",
+      "sublabel": "src/testData",
+      "sources": [
+        {
+          "path": "src/testData/TestData.ts",
+          "line": 36,
+          "end_line": 127,
+          "label": "TestData: factories + cleanup"
+        }
+      ]
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "FakeStore",
+      "sublabel": "in-memory stand-in",
+      "sources": [
+        {
+          "path": "tests/TestDataSafetyTest.spec.ts",
+          "line": 25,
+          "end_line": 55,
+          "label": "FakeStore: substring search, delete"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 489,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 175,
+      "label": "createEmployee()",
+      "variant": "emphasis"
+    },
+    {
+      "from": "testdata",
+      "to": "store",
+      "y": 205,
+      "label": "createEmployee()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "store",
+      "y": 235,
+      "label": "failDeletes = true",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 265,
+      "label": "cleanup(2 attempts)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "testdata",
+      "to": "store",
+      "y": 295,
+      "label": "findEmployees(id)",
+      "variant": "default"
+    },
+    {
+      "from": "testdata",
+      "to": "store",
+      "y": 325,
+      "label": "deleteEmployees([mine])",
+      "variant": "default"
+    },
+    {
+      "from": "store",
+      "to": "testdata",
+      "y": 355,
+      "label": "throws: server said no",
+      "variant": "dashed"
+    },
+    {
+      "from": "testdata",
+      "to": "store",
+      "y": 385,
+      "label": "findEmployees(id), again",
+      "variant": "default"
+    },
+    {
+      "from": "testdata",
+      "to": "store",
+      "y": 415,
+      "label": "deleteEmployees([mine]), again",
+      "variant": "default"
+    },
+    {
+      "from": "store",
+      "to": "testdata",
+      "y": 445,
+      "label": "throws again",
+      "variant": "dashed"
+    },
+    {
+      "from": "testdata",
+      "to": "spec",
+      "y": 475,
+      "label": "deleted 0, leaked [id]",
+      "variant": "return",
+      "note": "no throw; the next run's purge removes it"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What it checks",
+      "items": [
+        "When every delete fails, cleanup retries, does not throw, and reports the employee as leaked"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "No browser or network",
+      "items": [
+        "Runs offline; nothing real can be deleted"
+      ]
+    }
+  ]
+}

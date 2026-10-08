@@ -24,7 +24,8 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 - **HTML reporting** — rich Playwright HTML reports with traces captured on retry.
 - **CI** — GitHub Actions runs the full suite on every push/PR (see `.github/workflows/playwright.yml`).
 - **Discord notifications** — a pass/fail summary (with the HTML report attached) posts to Discord after every CI run and after `pnpm test:notify` locally. Fully optional - no `DISCORD_WEBHOOK_URL` set, no message sent. See [Discord notifications](#-discord-notifications) below.
-- **Excel test-suite reference** — `docs/OrangeHRM-Test-Suite.xlsx`, a generated (not committed) spreadsheet listing every Test ID, its QA Type, steps, and expected result - see [Test suite reference](#-test-suite-reference).
+- **A sequence diagram for every test, in one page** — drawn with Archify: which spec calls which function, in order, and what reaches the demo. `pnpm diagrams` builds `docs/diagrams/all-tests.html`, a single file with a test list to switch between them. See [Test documentation](#-test-documentation).
+- **Excel test-suite reference** — `docs/OrangeHRM-Test-Suite.xlsx`, generated from the committed `docs/test-suite/test-cases.json`: every Test ID, its QA Type, steps, expected result and whether it is automated yet. `pnpm docs:sync` keeps it (and the diagram sources) in step with the specs.
 
 ## 🛠️ Tech Stack
 
@@ -78,9 +79,15 @@ End-to-end UI test automation for the [OrangeHRM open-source demo](https://opens
 │   └── TestDataSafetyTest.spec.ts   # offline tests of the cleanup's own safety guards
 ├── scripts/
 │   ├── notify-discord.mjs     # posts a run summary to Discord via webhook
-│   └── test-and-notify.mjs    # runs the suite locally, then always notifies
+│   ├── test-and-notify.mjs    # runs the suite locally, then always notifies
+│   ├── sync-test-docs.mjs     # keeps the test-case list, Excel sheet and diagram sources in step with the specs
+│   ├── build-test-suite.mjs   # regenerates the Excel sheet from the test-case list
+│   ├── build-diagrams.mjs     # builds every diagram with Archify, then bundles them into one html
+│   └── lib/                   # xlsx writer, single-html diagram bundler
 ├── docs/
-│   └── OrangeHRM-Test-Suite.xlsx   # generated test-suite reference (gitignored, not committed)
+│   ├── test-suite/test-cases.json  # the test-case list (committed) - source of the Excel sheet
+│   ├── OrangeHRM-Test-Suite.xlsx   # generated from it (gitignored)
+│   └── diagrams/                   # sequence/*.json sources committed; all-tests.html built by `pnpm diagrams` (gitignored)
 ├── .github/workflows/      # CI
 ├── playwright.config.ts   # Playwright configuration
 ├── tsconfig.json          # TypeScript compiler config
@@ -130,6 +137,15 @@ pnpm test:notify     # run all tests, then post the result to Discord (see below
 pnpm report          # open the last HTML report
 ```
 
+Test documentation (see [Test documentation](#-test-documentation)):
+
+```bash
+pnpm docs:sync       # after adding a test: update the test-case list, Excel sheet and diagram sources
+pnpm docs:check      # read-only: exit 1 if the docs are out of step with the specs
+pnpm diagrams        # build docs/diagrams/all-tests.html (one page, every test's diagram)
+pnpm test-suite      # regenerate the Excel sheet only
+```
+
 Run a single spec or test:
 
 ```bash
@@ -151,11 +167,21 @@ This is entirely optional and safe to ignore: with no webhook configured, `scrip
 
 See [ARCHITECTURE.md §10](ARCHITECTURE.md#10-discord-notifications--the-excel-test-suite-reference) for how the script is built and why it never fails the build.
 
-## 📋 Test suite reference
+## 📋 Test documentation
 
-`docs/OrangeHRM-Test-Suite.xlsx` is a generated spreadsheet listing every test case - ID, Priority, Type, Module/Feature, Scenario, Steps, Input Data, Expected Result, Automated, and its spec file - plus a Summary tab with per-type counts. It's meant for sharing with someone who wants a non-repo view of test coverage (a test-plan review, a QA handoff) without reading TypeScript.
+Three generated views let you look up what a test does instead of reading the TypeScript:
 
-It's **not committed** (`docs/*.xlsx` is gitignored) - it's a point-in-time export that goes stale the moment a test is added or renamed, so it's regenerated on demand rather than maintained as a second, driftable source of truth. `src/config/testTypes.json` (committed) is the actual source of truth for each Test ID's QA Type.
+| You want to know | Look here |
+|---|---|
+| What a test checks: steps, expected result, priority, automated or only planned | `docs/OrangeHRM-Test-Suite.xlsx` |
+| Which function calls which, in order, and what reaches the demo | `docs/diagrams/all-tests.html` |
+| Where a step lives in the code | click a box in a diagram; its panel lists the exact file and lines |
+
+**Excel sheet.** `docs/OrangeHRM-Test-Suite.xlsx` has one row per Test ID (ID, Priority, Type, Module, Scenario, Steps, Input Data, Expected Result, Automated, Spec File) and a Summary tab with per-type counts. It is generated and gitignored; its source is the committed [`docs/test-suite/test-cases.json`](docs/test-suite/test-cases.json), so edit that, not the sheet. `pnpm test-suite` rebuilds it.
+
+**Sequence diagrams, one page.** `pnpm diagrams` builds every diagram with [Archify](https://github.com/tt-a1i/archify) and bundles them into **one file, `docs/diagrams/all-tests.html`** (about 6 MB, gitignored): open it and pick a test from the list on the left. Archify has no multi-diagram feature of its own, so the page is a thin container around Archify's unchanged output. Inside the frame it is the normal Archify viewer: click a box to see its verified source lines, or Export to PNG/SVG. It needs the Archify skill in `.claude/skills/archify` (not part of a fresh clone); the script prints the install command if it is missing. Full instructions: [docs/diagrams/README.md](docs/diagrams/README.md).
+
+**Adding a test? Run `pnpm docs:sync`.** It finds every `test("TC_...")` in `tests/` and, for each one that is missing, adds its row to the test-case list (or flips its Planned row to Automated), its type to `src/config/testTypes.json`, and a drafted diagram source, then regenerates the sheet. Anything it adds is marked **DRAFT**: it can read the code but not the application, so priority, input data and expected result say `TBD` and the diagram shows only the test's direct calls. Review those before committing. `pnpm docs:check` makes the same comparison without changing anything and exits 1 on a difference, so it can guard CI. How it works and its limits: [ARCHITECTURE.md §12](ARCHITECTURE.md#12-test-documentation-excel-sheet-sequence-diagrams-and-keeping-them-in-step).
 
 ## 🔐 Security Notes
 

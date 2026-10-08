@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_CEF_006: cancel returns to the list",
+    "output": "docs/diagrams/html/TC_CEF_006.html",
+    "viewBox": [
+      1080,
+      537
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@github-personal:RushanthanGunalan/orangehrmDemo-playwright-tests.git",
+      "link_mode": "local-only",
+      "revision": "7dfb3a95b567ad412ba7019ac14dbc1f39bbf42d"
+    },
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_CEF_006",
+      "sources": [
+        {
+          "path": "tests/AddEmployeeTest.spec.ts",
+          "line": 162,
+          "end_line": 182,
+          "label": "TC_CEF_006 test body"
+        },
+        {
+          "path": "tests/AddEmployeeTest.spec.ts",
+          "line": 5,
+          "end_line": 12,
+          "label": "beforeEach: UI login"
+        }
+      ]
+    },
+    {
+      "id": "pageobjects",
+      "type": "backend",
+      "label": "Page objects",
+      "sublabel": "LoginPage, PIMPage",
+      "sources": [
+        {
+          "path": "src/pages/LoginPage.ts",
+          "line": 9,
+          "end_line": 36,
+          "label": "LoginPage methods"
+        },
+        {
+          "path": "src/pages/PIMPage.ts",
+          "line": 8,
+          "end_line": 206,
+          "label": "PIMPage methods"
+        }
+      ]
+    },
+    {
+      "id": "demo",
+      "type": "external",
+      "label": "OrangeHRM demo",
+      "sublabel": "public demo site",
+      "sources": [
+        {
+          "path": "src/config/config.ts",
+          "line": 14,
+          "end_line": 19,
+          "label": "baseUrl: public demo by default"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 459,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 175,
+      "label": "loginPage.login(admin)",
+      "variant": "default",
+      "note": "beforeEach: navigate, login, assert Dashboard"
+    },
+    {
+      "from": "pageobjects",
+      "to": "demo",
+      "y": 205,
+      "label": "sign in (UI)",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 235,
+      "label": "pimPage.navigatetoPIMPage()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 265,
+      "label": "validatePIMPagePath(\"PIM\")",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 295,
+      "label": "pimPage.navigateToAddEmployee()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 325,
+      "label": "cancelAddEmployee()",
+      "variant": "emphasis"
+    },
+    {
+      "from": "pageobjects",
+      "to": "demo",
+      "y": 355,
+      "label": "click Cancel (UI)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 385,
+      "label": "assertOnEmployeeList()",
+      "variant": "default"
+    },
+    {
+      "from": "pageobjects",
+      "to": "demo",
+      "y": 415,
+      "label": "look for the Add button (UI)",
+      "variant": "default"
+    },
+    {
+      "from": "demo",
+      "to": "pageobjects",
+      "y": 445,
+      "label": "Add button visible",
+      "variant": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What it shows",
+      "items": [
+        "Opening the Add Employee form and cancelling lands back on the Employee List"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "No data created",
+      "items": [
+        "Nothing is saved, so there is nothing to clean up"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Abridged on purpose",
+      "items": [
+        "Shows the calls that carry this test's meaning",
+        "Assertion-only helpers and most browser echoes are left out",
+        "Login, data creation and cleanup are shown in full in the three TC_UCF_001 diagrams"
+      ]
+    }
+  ]
+}

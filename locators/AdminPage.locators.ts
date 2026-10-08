@@ -6,6 +6,7 @@ import {
   selectByLabel,
   optionByName,
   autocompleteOptionByText,
+  fieldErrorByLabel,
 } from "./components/formField.locators";
 
 export type AdminPageLocators = {
@@ -31,6 +32,8 @@ export type AdminPageLocators = {
   confirmPasswordInput: Locator;
   saveButton: Locator;
   successToastMessage: Locator;
+  /** The validation message under one field, found by that field's label. */
+  fieldError: (labelText: string | RegExp) => Locator;
 };
 
 export function adminPageLocators(page: Page): AdminPageLocators {
@@ -89,5 +92,7 @@ export function adminPageLocators(page: Page): AdminPageLocators {
     confirmPasswordInput: inputGroupByLabel(page, "Confirm Password"),
     saveButton: page.getByRole("button", { name: "Save" }),
     successToastMessage: toastLocators(page).successMessage,
+    fieldError: (labelText: string | RegExp) =>
+      fieldErrorByLabel(page, labelText),
   };
 }

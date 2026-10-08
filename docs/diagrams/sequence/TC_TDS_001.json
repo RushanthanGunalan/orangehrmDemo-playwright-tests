@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_TDS_001: a generated id is valid and fresh",
+    "output": "docs/diagrams/html/TC_TDS_001.html",
+    "viewBox": [
+      1080,
+      480
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@github-personal:RushanthanGunalan/orangehrmDemo-playwright-tests.git",
+      "link_mode": "local-only",
+      "revision": "7dfb3a95b567ad412ba7019ac14dbc1f39bbf42d"
+    },
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_TDS_001",
+      "sources": [
+        {
+          "path": "tests/TestDataSafetyTest.spec.ts",
+          "line": 58,
+          "end_line": 68,
+          "label": "TC_TDS_001 test body"
+        }
+      ]
+    },
+    {
+      "id": "ids",
+      "type": "backend",
+      "label": "ids.ts",
+      "sublabel": "QAR marker ids",
+      "sources": [
+        {
+          "path": "src/testData/ids.ts",
+          "line": 37,
+          "end_line": 46,
+          "label": "newEmployeeId()"
+        },
+        {
+          "path": "src/testData/ids.ts",
+          "line": 49,
+          "end_line": 51,
+          "label": "isTestEmployeeId()"
+        },
+        {
+          "path": "src/testData/ids.ts",
+          "line": 68,
+          "end_line": 74,
+          "label": "isStaleTestEmployeeId()"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 339,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "ids",
+      "y": 175,
+      "label": "newEmployeeId(now)",
+      "variant": "default"
+    },
+    {
+      "from": "ids",
+      "to": "spec",
+      "y": 205,
+      "label": "QAR + stamp + 3 chars",
+      "variant": "return"
+    },
+    {
+      "from": "spec",
+      "to": "ids",
+      "y": 235,
+      "label": "isTestEmployeeId(id)",
+      "variant": "default"
+    },
+    {
+      "from": "ids",
+      "to": "spec",
+      "y": 265,
+      "label": "true",
+      "variant": "return"
+    },
+    {
+      "from": "spec",
+      "to": "ids",
+      "y": 295,
+      "label": "isStaleTestEmployeeId(id, now)",
+      "variant": "default"
+    },
+    {
+      "from": "ids",
+      "to": "spec",
+      "y": 325,
+      "label": "false",
+      "variant": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What it checks",
+      "items": [
+        "The id is exactly 10 characters (the server limit), is recognised as ours, and is not stale"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "No browser or network",
+      "items": [
+        "Runs offline; nothing real can be deleted"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_UCF_001 (3 of 3) Cleanup: purge and teardown",
+    "output": "docs/diagrams/html/TC_UCF_001-3-cleanup.html",
+    "viewBox": [
+      1080,
+      693
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@github-personal:RushanthanGunalan/orangehrmDemo-playwright-tests.git",
+      "link_mode": "local-only",
+      "revision": "7dfb3a95b567ad412ba7019ac14dbc1f39bbf42d"
+    },
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "fixtures",
+      "type": "backend",
+      "label": "Fixtures",
+      "sublabel": "tests/fixtures.ts",
+      "sources": [
+        {
+          "path": "tests/fixtures.ts",
+          "line": 42,
+          "end_line": 93,
+          "label": "test.extend: pm, testData, adminApi"
+        }
+      ]
+    },
+    {
+      "id": "purge",
+      "type": "backend",
+      "label": "purge.ts",
+      "sublabel": "purgeStaleTestData()",
+      "sources": [
+        {
+          "path": "src/testData/purge.ts",
+          "line": 40,
+          "end_line": 60,
+          "label": "purgeStaleTestData()"
+        }
+      ]
+    },
+    {
+      "id": "testdata",
+      "type": "backend",
+      "label": "TestData",
+      "sublabel": "src/testData",
+      "sources": [
+        {
+          "path": "src/testData/TestData.ts",
+          "line": 36,
+          "end_line": 127,
+          "label": "TestData: factories + cleanup"
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "OrangeHrmApi",
+      "sublabel": "src/api",
+      "sources": [
+        {
+          "path": "src/api/OrangeHrmApi.ts",
+          "line": 53,
+          "end_line": 205,
+          "label": "create / find / delete employees"
+        }
+      ]
+    },
+    {
+      "id": "demo",
+      "type": "external",
+      "label": "OrangeHRM demo",
+      "sublabel": "public demo site",
+      "sources": [
+        {
+          "path": "src/config/config.ts",
+          "line": 14,
+          "end_line": 19,
+          "label": "baseUrl: public demo by default"
+        },
+        {
+          "path": "src/api/OrangeHrmApi.ts",
+          "line": 53,
+          "end_line": 205,
+          "label": "pim/employees API calls"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 369,
+      "label": "Pre-run purge"
+    },
+    {
+      "from": 406,
+      "to": 615,
+      "label": "Teardown (per test)"
+    }
+  ],
+  "messages": [
+    {
+      "from": "fixtures",
+      "to": "purge",
+      "y": 175,
+      "label": "purgeStaleTestData()",
+      "variant": "default"
+    },
+    {
+      "from": "purge",
+      "to": "api",
+      "y": 205,
+      "label": "findEmployees(QAR)",
+      "variant": "default"
+    },
+    {
+      "from": "api",
+      "to": "demo",
+      "y": 235,
+      "label": "GET pim/employees",
+      "variant": "default"
+    },
+    {
+      "from": "demo",
+      "to": "api",
+      "y": 265,
+      "label": "matches",
+      "variant": "return"
+    },
+    {
+      "from": "api",
+      "to": "purge",
+      "y": 295,
+      "label": "employees",
+      "variant": "return"
+    },
+    {
+      "from": "purge",
+      "to": "api",
+      "y": 325,
+      "label": "deleteEmployees(stale)",
+      "variant": "dashed",
+      "note": "only marked ids 10+ minutes old; none if over 100"
+    },
+    {
+      "from": "api",
+      "to": "demo",
+      "y": 355,
+      "label": "DELETE pim/employees",
+      "variant": "dashed"
+    },
+    {
+      "from": "fixtures",
+      "to": "testdata",
+      "y": 421,
+      "label": "data.cleanup()",
+      "variant": "default"
+    },
+    {
+      "from": "testdata",
+      "to": "api",
+      "y": 451,
+      "label": "findEmployees(id)",
+      "variant": "default"
+    },
+    {
+      "from": "api",
+      "to": "demo",
+      "y": 481,
+      "label": "GET pim/employees",
+      "variant": "default"
+    },
+    {
+      "from": "demo",
+      "to": "api",
+      "y": 511,
+      "label": "the employee",
+      "variant": "return"
+    },
+    {
+      "from": "api",
+      "to": "testdata",
+      "y": 541,
+      "label": "employee",
+      "variant": "return"
+    },
+    {
+      "from": "testdata",
+      "to": "api",
+      "y": 571,
+      "label": "deleteEmployees(ids)",
+      "variant": "default",
+      "note": "then a second findEmployees confirms it is gone"
+    },
+    {
+      "from": "api",
+      "to": "demo",
+      "y": 601,
+      "label": "DELETE pim/employees",
+      "variant": "default",
+      "note": "also removes the user"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Two cleanups",
+      "items": [
+        "Pre-run purge: only ids shaped like the QAR marker, 10+ minutes old, and it refuses over 100",
+        "Teardown: deletes only this test's own ids, then looks again to confirm they are gone",
+        "Deleting the employee also removes the user the test created"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Simplified on purpose",
+      "items": [
+        "The purge's dashed arrows only happen when it finds stale records",
+        "Retries inside the API client, and teardown's own retry loop, are left out"
+      ]
+    }
+  ]
+}

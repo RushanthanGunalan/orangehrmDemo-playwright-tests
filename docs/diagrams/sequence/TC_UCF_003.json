@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_UCF_003: Add User Shows Required Field Errors When Form Is Blank",
+    "output": "docs/diagrams/html/TC_UCF_003.html",
+    "viewBox": [
+      1080,
+      480
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_UCF_003"
+    },
+    {
+      "id": "adminpage",
+      "type": "backend",
+      "label": "AdminPage"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 369,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 175,
+      "label": "adminPage.navigateToAdminPage()",
+      "variant": "default",
+      "note": "Act: open Admin > Add User form"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 205,
+      "label": "adminPage.navigateToAddUser()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 235,
+      "label": "adminPage.assertNoFieldErrors()",
+      "variant": "default",
+      "note": "Assert: the untouched form shows no validation messages"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 265,
+      "label": "adminPage.saveUser()",
+      "variant": "default",
+      "note": "Act: click Save with every field empty"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 295,
+      "label": "adminPage.assertBlankFormErrors()",
+      "variant": "default",
+      "note": "Assert: five fields show \"Required\" and Confirm Password shows \"Passwords do not match\""
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 325,
+      "label": "adminPage.assertStillOnAddUserForm()",
+      "variant": "default",
+      "note": "Assert: still on the Add User form and no success toast (nothing was saved)"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Draft - needs review",
+      "items": [
+        "DRAFT drawn automatically from the spec's direct calls. It shows no returns and nothing below the page-object layer.",
+        "Not source-linked: there are no SRC badges until the test is committed and the diagram is completed."
+      ]
+    }
+  ]
+}

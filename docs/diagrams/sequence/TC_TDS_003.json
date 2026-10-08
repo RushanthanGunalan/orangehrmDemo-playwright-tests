@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_TDS_003: ids that are not ours are ignored",
+    "output": "docs/diagrams/html/TC_TDS_003.html",
+    "viewBox": [
+      1080,
+      480
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@github-personal:RushanthanGunalan/orangehrmDemo-playwright-tests.git",
+      "link_mode": "local-only",
+      "revision": "7dfb3a95b567ad412ba7019ac14dbc1f39bbf42d"
+    },
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_TDS_003",
+      "sources": [
+        {
+          "path": "tests/TestDataSafetyTest.spec.ts",
+          "line": 81,
+          "end_line": 95,
+          "label": "TC_TDS_003 test body"
+        }
+      ]
+    },
+    {
+      "id": "ids",
+      "type": "backend",
+      "label": "ids.ts",
+      "sublabel": "QAR marker ids",
+      "sources": [
+        {
+          "path": "src/testData/ids.ts",
+          "line": 37,
+          "end_line": 46,
+          "label": "newEmployeeId()"
+        },
+        {
+          "path": "src/testData/ids.ts",
+          "line": 49,
+          "end_line": 51,
+          "label": "isTestEmployeeId()"
+        },
+        {
+          "path": "src/testData/ids.ts",
+          "line": 68,
+          "end_line": 74,
+          "label": "isStaleTestEmployeeId()"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 279,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "ids",
+      "y": 175,
+      "label": "isTestEmployeeId(id), 13 non-test ids",
+      "variant": "default"
+    },
+    {
+      "from": "ids",
+      "to": "spec",
+      "y": 205,
+      "label": "false for every one",
+      "variant": "return"
+    },
+    {
+      "from": "spec",
+      "to": "ids",
+      "y": 235,
+      "label": "isStaleTestEmployeeId(id), same ids",
+      "variant": "default"
+    },
+    {
+      "from": "ids",
+      "to": "spec",
+      "y": 265,
+      "label": "false for every one",
+      "variant": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What it checks",
+      "items": [
+        "Ordinary ids, empty or null ids, wrong lengths, wrong case and a misplaced prefix are never treated as test data"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "No browser or network",
+      "items": [
+        "Runs offline; nothing real can be deleted"
+      ]
+    }
+  ]
+}

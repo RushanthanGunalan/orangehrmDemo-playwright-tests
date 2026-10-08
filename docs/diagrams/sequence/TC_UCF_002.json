@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_UCF_002: Admin user with Disabled status",
+    "output": "docs/diagrams/html/TC_UCF_002.html",
+    "viewBox": [
+      1080,
+      693
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@github-personal:RushanthanGunalan/orangehrmDemo-playwright-tests.git",
+      "link_mode": "local-only",
+      "revision": "7dfb3a95b567ad412ba7019ac14dbc1f39bbf42d"
+    },
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_UCF_002",
+      "sources": [
+        {
+          "path": "tests/AddUserTest.spec.ts",
+          "line": 67,
+          "end_line": 116,
+          "label": "TC_UCF_002 test body"
+        },
+        {
+          "path": "tests/AddUserTest.spec.ts",
+          "line": 5,
+          "end_line": 12,
+          "label": "beforeEach: UI login"
+        }
+      ]
+    },
+    {
+      "id": "pageobjects",
+      "type": "backend",
+      "label": "Page objects",
+      "sublabel": "LoginPage, AdminPage",
+      "sources": [
+        {
+          "path": "src/pages/LoginPage.ts",
+          "line": 9,
+          "end_line": 36,
+          "label": "LoginPage methods"
+        },
+        {
+          "path": "src/pages/AdminPage.ts",
+          "line": 22,
+          "end_line": 120,
+          "label": "AdminPage methods"
+        }
+      ]
+    },
+    {
+      "id": "demo",
+      "type": "external",
+      "label": "OrangeHRM demo",
+      "sublabel": "public demo site",
+      "sources": [
+        {
+          "path": "src/config/config.ts",
+          "line": 14,
+          "end_line": 19,
+          "label": "baseUrl: public demo by default"
+        },
+        {
+          "path": "src/api/OrangeHrmApi.ts",
+          "line": 53,
+          "end_line": 205,
+          "label": "pim/employees API calls"
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "OrangeHrmApi",
+      "sublabel": "src/api",
+      "sources": [
+        {
+          "path": "src/api/OrangeHrmApi.ts",
+          "line": 53,
+          "end_line": 205,
+          "label": "create / find / delete employees"
+        }
+      ]
+    },
+    {
+      "id": "testdata",
+      "type": "backend",
+      "label": "TestData",
+      "sublabel": "src/testData",
+      "sources": [
+        {
+          "path": "src/testData/TestData.ts",
+          "line": 36,
+          "end_line": 127,
+          "label": "TestData: factories + cleanup"
+        }
+      ]
+    },
+    {
+      "id": "fixtures",
+      "type": "backend",
+      "label": "Fixtures",
+      "sublabel": "tests/fixtures.ts",
+      "sources": [
+        {
+          "path": "tests/fixtures.ts",
+          "line": 42,
+          "end_line": 93,
+          "label": "test.extend: pm, testData, adminApi"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 519,
+      "label": "Test"
+    },
+    {
+      "from": 556,
+      "to": 615,
+      "label": "Teardown"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 175,
+      "label": "loginPage.login(admin)",
+      "variant": "default",
+      "note": "beforeEach: navigate, login, assert Dashboard"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 205,
+      "label": "employeeName(), username(), password()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 235,
+      "label": "createEmployee(name)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "testdata",
+      "to": "api",
+      "y": 265,
+      "label": "createEmployee()",
+      "variant": "emphasis",
+      "note": "the employee id carries the QAR marker"
+    },
+    {
+      "from": "api",
+      "to": "demo",
+      "y": 295,
+      "label": "POST pim/employees",
+      "variant": "emphasis"
+    },
+    {
+      "from": "testdata",
+      "to": "spec",
+      "y": 325,
+      "label": "employee",
+      "variant": "return"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 355,
+      "label": "adminPage.navigateToAddUser()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 385,
+      "label": "fillUserForm(Admin, Disabled)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 415,
+      "label": "saveUser()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 445,
+      "label": "assertUserSaved()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 475,
+      "label": "searchUserByUsername()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "pageobjects",
+      "y": 505,
+      "label": "assertUserListed()",
+      "variant": "default",
+      "note": "(1) Record Found, then username, role, employee, status in one assertion"
+    },
+    {
+      "from": "fixtures",
+      "to": "testdata",
+      "y": 571,
+      "label": "data.cleanup()",
+      "variant": "default",
+      "note": "runs after the test, pass or fail"
+    },
+    {
+      "from": "testdata",
+      "to": "api",
+      "y": 601,
+      "label": "deleteEmployees(ids)",
+      "variant": "default",
+      "note": "after findEmployees(id); GET and DELETE pim/employees; also removes any user"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What it shows",
+      "items": [
+        "The same flow as TC_UCF_001 with the other role and status: Admin and Disabled"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Cleanup",
+      "items": [
+        "Deleting the employee also removes the Admin user, which was checked on the live demo"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Abridged on purpose",
+      "items": [
+        "Shows the calls that carry this test's meaning",
+        "Assertion-only helpers and most browser echoes are left out",
+        "Login, data creation and cleanup are shown in full in the three TC_UCF_001 diagrams"
+      ]
+    }
+  ]
+}

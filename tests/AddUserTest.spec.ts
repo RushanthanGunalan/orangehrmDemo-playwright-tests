@@ -114,4 +114,34 @@ test.describe("Add User", () => {
       });
     });
   });
+
+  test("TC_UCF_003: Add User Shows Required Field Errors When Form Is Blank", async ({ pm }) => {
+    // No data: this test never fills the form, so it creates no employee and
+    // no user and has nothing to clean up (it does not use `testData` at all).
+    //
+    // Messages verified live before writing this: five fields say "Required",
+    // and Confirm Password says "Passwords do not match" - not "Required", as
+    // the test plan first assumed. See AdminPage.assertBlankFormErrors().
+    await test.step("Act: open Admin > Add User form", async () => {
+      await pm.adminPage.navigateToAdminPage();
+      await pm.adminPage.navigateToAddUser();
+    });
+
+    // Proves the messages below are caused by Save, not already on screen.
+    await test.step("Assert: the untouched form shows no validation messages", async () => {
+      await pm.adminPage.assertNoFieldErrors();
+    });
+
+    await test.step("Act: click Save with every field empty", async () => {
+      await pm.adminPage.saveUser();
+    });
+
+    await test.step('Assert: five fields show "Required" and Confirm Password shows "Passwords do not match"', async () => {
+      await pm.adminPage.assertBlankFormErrors();
+    });
+
+    await test.step("Assert: still on the Add User form and no success toast (nothing was saved)", async () => {
+      await pm.adminPage.assertStillOnAddUserForm();
+    });
+  });
 });

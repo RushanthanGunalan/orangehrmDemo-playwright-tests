@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_TDS_006: purge deletes only stale test employees",
+    "output": "docs/diagrams/html/TC_TDS_006.html",
+    "viewBox": [
+      1080,
+      480
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@github-personal:RushanthanGunalan/orangehrmDemo-playwright-tests.git",
+      "link_mode": "local-only",
+      "revision": "7dfb3a95b567ad412ba7019ac14dbc1f39bbf42d"
+    },
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_TDS_006",
+      "sources": [
+        {
+          "path": "tests/TestDataSafetyTest.spec.ts",
+          "line": 115,
+          "end_line": 133,
+          "label": "TC_TDS_006 test body"
+        }
+      ]
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "FakeStore",
+      "sublabel": "in-memory stand-in",
+      "sources": [
+        {
+          "path": "tests/TestDataSafetyTest.spec.ts",
+          "line": 25,
+          "end_line": 55,
+          "label": "FakeStore: substring search, delete"
+        }
+      ]
+    },
+    {
+      "id": "purge",
+      "type": "backend",
+      "label": "purge.ts",
+      "sublabel": "purgeStaleTestData()",
+      "sources": [
+        {
+          "path": "src/testData/purge.ts",
+          "line": 40,
+          "end_line": 60,
+          "label": "purgeStaleTestData()"
+        }
+      ]
+    },
+    {
+      "id": "ids",
+      "type": "backend",
+      "label": "ids.ts",
+      "sublabel": "QAR marker ids",
+      "sources": [
+        {
+          "path": "src/testData/ids.ts",
+          "line": 37,
+          "end_line": 46,
+          "label": "newEmployeeId()"
+        },
+        {
+          "path": "src/testData/ids.ts",
+          "line": 49,
+          "end_line": 51,
+          "label": "isTestEmployeeId()"
+        },
+        {
+          "path": "src/testData/ids.ts",
+          "line": 68,
+          "end_line": 74,
+          "label": "isStaleTestEmployeeId()"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 399,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "store",
+      "y": 175,
+      "label": "add() x 5",
+      "variant": "default",
+      "note": "stale, fresh, someone else's, a look-alike name, no id"
+    },
+    {
+      "from": "spec",
+      "to": "purge",
+      "y": 205,
+      "label": "purgeStaleTestData(store, now)",
+      "variant": "emphasis"
+    },
+    {
+      "from": "purge",
+      "to": "store",
+      "y": 235,
+      "label": "findEmployees(\"QAR\")",
+      "variant": "default"
+    },
+    {
+      "from": "store",
+      "to": "purge",
+      "y": 265,
+      "label": "5 employees (substring match)",
+      "variant": "return"
+    },
+    {
+      "from": "purge",
+      "to": "ids",
+      "y": 295,
+      "label": "isTestEmployeeId(), isStaleTestEmployeeId()",
+      "variant": "default"
+    },
+    {
+      "from": "ids",
+      "to": "purge",
+      "y": 325,
+      "label": "1 stale, 1 fresh",
+      "variant": "return"
+    },
+    {
+      "from": "purge",
+      "to": "store",
+      "y": 355,
+      "label": "deleteEmployees([stale])",
+      "variant": "emphasis"
+    },
+    {
+      "from": "purge",
+      "to": "spec",
+      "y": 385,
+      "label": "deleted 1, keptFresh 1",
+      "variant": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What it checks",
+      "items": [
+        "Only the stale test employee is deleted; fresh, someone else's, look-alike and id-less records all survive"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Mutation-checked",
+      "items": [
+        "Trusting the server's substring match instead of the exact id check makes this test fail"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "No browser or network",
+      "items": [
+        "Runs offline; nothing real can be deleted"
+      ]
+    }
+  ]
+}

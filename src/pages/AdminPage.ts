@@ -19,6 +19,20 @@ export type NewUser = {
   password: string;
 };
 
+/**
+ * The Add User form's fields in on-screen order. `name` is how a failure
+ * reads; `label` is what the field is found by ("Password" needs an exact
+ * regex because it is also a substring of "Confirm Password").
+ */
+const ADD_USER_FIELDS: { name: string; label: string | RegExp }[] = [
+  { name: "User Role", label: "User Role" },
+  { name: "Employee Name", label: "Employee Name" },
+  { name: "Status", label: "Status" },
+  { name: "Username", label: "Username" },
+  { name: "Password", label: /^Password$/ },
+  { name: "Confirm Password", label: "Confirm Password" },
+];
+
 export default class AdminPage {
   readonly actions: CommonActions;
   readonly page: Page;
@@ -70,6 +84,64 @@ export default class AdminPage {
 
   async saveUser() {
     await this.locators.saveButton.click();
+  }
+
+  /** Every Add User field's current validation message ("" when none is shown). */
+  private async readFieldErrors(): Promise<Record<string, string>> {
+    const errors: Record<string, string> = {};
+    for (const field of ADD_USER_FIELDS) {
+      errors[field.name] = (
+        await this.locators.fieldError(field.label).allTextContents()
+      ).join(" | ");
+    }
+    return errors;
+  }
+
+  /**
+   * Asserts the pristine form shows no validation messages yet. It first
+   * waits for the form itself: with the page not loaded every message is
+   * trivially absent, which would make this check pass without proving
+   * anything - and it is what proves the messages later are CAUSED by Save.
+   */
+  async assertNoFieldErrors() {
+    await expect(this.locators.usernameInput).toBeVisible();
+    await expect
+      .poll(() => this.readFieldErrors(), { timeout: this.actions.defaultTimeout })
+      .toEqual(Object.fromEntries(ADD_USER_FIELDS.map((f) => [f.name, ""])));
+  }
+
+  /**
+   * Asserts the messages shown after submitting the form with every field
+   * empty, in ONE assertion that names the field when one is wrong (it
+   * retries until all six messages have rendered, then fails once with a
+   * field -> message diff).
+   *
+   * Verified live: five fields say "Required", but Confirm Password says
+   * "Passwords do not match" even though both password fields are empty
+   * (why the app words it that way is not known). That is the app's real
+   * behaviour today and is asserted as such; if the app is changed to say
+   * "Required" here, this fails on purpose so a person decides which is right.
+   */
+  async assertBlankFormErrors() {
+    await expect
+      .poll(() => this.readFieldErrors(), { timeout: this.actions.defaultTimeout })
+      .toEqual({
+        "User Role": "Required",
+        "Employee Name": "Required",
+        Status: "Required",
+        Username: "Required",
+        Password: "Required",
+        "Confirm Password": "Passwords do not match",
+      });
+  }
+
+  /**
+   * Asserts the submit did not go through: still on the Add User form (a real
+   * save redirects to the user list) and no success toast appeared.
+   */
+  async assertStillOnAddUserForm() {
+    await expect(this.page).toHaveURL(/\/admin\/saveSystemUser/);
+    await expect(this.locators.successToastMessage).toHaveCount(0);
   }
 
   async assertUserSaved() {

@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_TDS_002: stale exactly at the age threshold",
+    "output": "docs/diagrams/html/TC_TDS_002.html",
+    "viewBox": [
+      1080,
+      480
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@github-personal:RushanthanGunalan/orangehrmDemo-playwright-tests.git",
+      "link_mode": "local-only",
+      "revision": "7dfb3a95b567ad412ba7019ac14dbc1f39bbf42d"
+    },
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_TDS_002",
+      "sources": [
+        {
+          "path": "tests/TestDataSafetyTest.spec.ts",
+          "line": 70,
+          "end_line": 79,
+          "label": "TC_TDS_002 test body"
+        }
+      ]
+    },
+    {
+      "id": "ids",
+      "type": "backend",
+      "label": "ids.ts",
+      "sublabel": "QAR marker ids",
+      "sources": [
+        {
+          "path": "src/testData/ids.ts",
+          "line": 37,
+          "end_line": 46,
+          "label": "newEmployeeId()"
+        },
+        {
+          "path": "src/testData/ids.ts",
+          "line": 49,
+          "end_line": 51,
+          "label": "isTestEmployeeId()"
+        },
+        {
+          "path": "src/testData/ids.ts",
+          "line": 68,
+          "end_line": 74,
+          "label": "isStaleTestEmployeeId()"
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 399,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "ids",
+      "y": 175,
+      "label": "newEmployeeId(now - 2 units)",
+      "variant": "default"
+    },
+    {
+      "from": "ids",
+      "to": "spec",
+      "y": 205,
+      "label": "justUnder id",
+      "variant": "return"
+    },
+    {
+      "from": "spec",
+      "to": "ids",
+      "y": 235,
+      "label": "newEmployeeId(now - 3 units)",
+      "variant": "default"
+    },
+    {
+      "from": "ids",
+      "to": "spec",
+      "y": 265,
+      "label": "atThreshold id",
+      "variant": "return"
+    },
+    {
+      "from": "spec",
+      "to": "ids",
+      "y": 295,
+      "label": "isStaleTestEmployeeId(justUnder)",
+      "variant": "default"
+    },
+    {
+      "from": "ids",
+      "to": "spec",
+      "y": 325,
+      "label": "false",
+      "variant": "return"
+    },
+    {
+      "from": "spec",
+      "to": "ids",
+      "y": 355,
+      "label": "isStaleTestEmployeeId(atThreshold)",
+      "variant": "default"
+    },
+    {
+      "from": "ids",
+      "to": "spec",
+      "y": 385,
+      "label": "true",
+      "variant": "return"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "What it checks",
+      "items": [
+        "A boundary test of the purge's age rule: 2 units old is kept, 3 units old is stale"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "No browser or network",
+      "items": [
+        "Runs offline; nothing real can be deleted"
+      ]
+    }
+  ]
+}

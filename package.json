@@ -10,7 +10,11 @@
     "test:ui": "playwright test --ui",
     "test:debug": "playwright test --debug",
     "test:notify": "node scripts/test-and-notify.mjs",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "diagrams": "node scripts/sync-test-docs.mjs && node scripts/build-diagrams.mjs",
+    "docs:sync": "node scripts/sync-test-docs.mjs",
+    "docs:check": "node scripts/sync-test-docs.mjs --check",
+    "test-suite": "node scripts/build-test-suite.mjs"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +26,7 @@
     "@types/node": "^22.13.10",
     "archiver": "^8.0.0",
     "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
     "typescript": "^5.6.0"
   }
 }

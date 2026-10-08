@@ -6,6 +6,7 @@ node_modules/
 /playwright-report.zip
 /blob-report/
 /playwright/.cache/
+.claude/skills/
 
 # Environment variables - .env isn't strictly required here (the demo
 # credentials have safe public fallbacks, see src/config/credentials.ts),
@@ -15,5 +16,13 @@ node_modules/
 
 # Point-in-time test-suite export (docs/OrangeHRM-Test-Suite.xlsx) - stale
 # the moment a test is added or renamed; regenerate on demand instead of
-# committing. src/config/testTypes.json is the committed source of truth.
+# committing. the committed source is docs/test-suite/test-cases.json (see `pnpm docs:sync`).
 docs/*.xlsx
+
+# Archify diagrams: the JSON sources in docs/diagrams/sequence/ are committed;
+# the generated HTML (about 740 KB each, plus Archify's evidence receipts) is
+# rebuilt on demand with `pnpm diagrams`. .archify/ is Archify's scratch folder
+# for one-off diagrams.
+docs/diagrams/html/
+docs/diagrams/all-tests.html
+.archify/
