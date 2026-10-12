@@ -18,6 +18,7 @@ export type AdminPageLocators = {
   searchUsernameInput: Locator;
   searchButton: Locator;
   recordsFoundText: Locator;
+  noRecordsFoundText: Locator;
   userRow: (username: string) => Locator;
   dataCellsInRow: (row: Locator) => Locator;
 
@@ -62,6 +63,10 @@ export function adminPageLocators(page: Page): AdminPageLocators {
     // the unfiltered table already has rows, so "a row exists" proves
     // nothing about whether the search has been applied yet.
     recordsFoundText: page.getByText(/\(\d+\) Records? Found/),
+    // Verified live: a search with no hits shows this text TWICE (an info
+    // toast and the table's own message) and no "(N) Records Found" text, so
+    // callers must use .first(), never a strict match.
+    noRecordsFoundText: page.getByText("No Records Found"),
     // Verified live: table rows are role="row" and cells role="cell" with
     // clean accessible names, so no CSS classes are needed. The header row
     // never contains a username, so hasText can't match it.

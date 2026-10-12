@@ -317,12 +317,12 @@
     "type": "Negative",
     "module": "Admin - User Management / Add User",
     "scenario": "Password And Confirm Password Mismatch Is Rejected",
-    "steps": "1. Create a new employee in PIM\n2. Go to Admin > User Management and click Add\n3. Fill every field validly, but enter a different value in Confirm Password\n4. Click Save",
-    "input": "Self-created employee; generated username; two different passwords",
-    "expected": "A validation error appears on Confirm Password and no user is created. Exact message to be verified live before automating.",
-    "automated": "Planned",
-    "spec": "tests/AddUserTest.spec.ts (planned)",
-    "notes": "Planned, not automated yet. Confirmed live already: a password with no digit is rejected (\"Your password must contain minimum 1 number\", see TC_CEF_003). Still to verify: minimum length and any other rules."
+    "steps": "1. Create an employee through the API (the form needs a real one)\n2. Log in, go to Admin > User Management and click Add\n3. Fill every field validly, but make Confirm Password differ from Password\n4. Check only Confirm Password shows a message\n5. Click Save\n6. Check the page is still the form, the message remains, and no success toast appeared\n7. Search the User Management list for the username",
+    "input": "Self-created employee; generated username; Password = a generated password, Confirm Password = the same value with an extra character",
+    "expected": "Confirm Password shows \"Passwords do not match\" and no other field shows an error. Save does not go through: the page stays on the Add User form with no success toast. Searching the list for that username returns \"No Records Found\" (no user was created).",
+    "automated": "Yes",
+    "spec": "tests/AddUserTest.spec.ts",
+    "notes": "Verified live before automating: the message appears as soon as the value is typed (not only on Save), is case-sensitive (a case-only difference still mismatches), and clears when the two match again; Save sent no create request. The employee is created through the API and deleted by teardown (which would also remove a wrongly created user). The test asserts only the extra-character mismatch; case-sensitivity was observed, not tested. Password minimum length and other password rules were NOT verified here (out of scope for this case)."
   },
   {
     "id": "TC_UCF_005",

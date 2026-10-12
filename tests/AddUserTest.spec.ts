@@ -144,4 +144,61 @@ test.describe("Add User", () => {
       await pm.adminPage.assertStillOnAddUserForm();
     });
   });
+
+  test("TC_UCF_004: Password And Confirm Password Mismatch Is Rejected", async ({ pm, testData }) => {
+    // A mismatch needs an otherwise VALID form (so the only thing wrong is the
+    // mismatch), and a valid form needs a real employee. Created through the
+    // API, as in TC_UCF_001/002, because this test is about the password
+    // check, not the Add Employee form. The fixture deletes the employee
+    // afterwards; if the app DID wrongly create the user, deleting the
+    // employee would remove it too (verified live for other roles/statuses).
+    //
+    // Behaviour verified live before writing this: "Passwords do not match"
+    // appears on Confirm Password only, as soon as the value is typed (not
+    // just on Save); it is case-sensitive; Save does not send a create request.
+    const name = testData.employeeName();
+    const username = testData.username();
+    const password = testData.password();
+    const confirmPassword = `${password}x`;
+
+    const employee = await test.step(`Arrange: create employee "${name.firstName} ${name.lastName}" via the API`, async () => {
+      return testData.createEmployee(name);
+    });
+
+    await test.step("Act: open Admin > Add User form", async () => {
+      await pm.adminPage.navigateToAdminPage();
+      await pm.adminPage.navigateToAddUser();
+    });
+
+    await test.step(`Act: fill every field validly for "${username}", but a different Confirm Password`, async () => {
+      await pm.adminPage.fillUserForm({
+        role: "ESS",
+        status: "Enabled",
+        employeeSearchTerm: employee.lastName,
+        username,
+        password,
+        confirmPassword,
+      });
+    });
+
+    await test.step('Assert: only Confirm Password shows "Passwords do not match"; no other field errors', async () => {
+      await pm.adminPage.assertOnlyConfirmPasswordMismatch();
+    });
+
+    await test.step("Act: click Save", async () => {
+      await pm.adminPage.saveUser();
+    });
+
+    await test.step("Assert: still on the form, the message is still there, no success toast", async () => {
+      await pm.adminPage.assertStillOnAddUserForm();
+      await pm.adminPage.assertOnlyConfirmPasswordMismatch();
+    });
+
+    // The strongest evidence that nothing was created is the user list itself.
+    await test.step(`Assert: no user "${username}" exists in the User Management list`, async () => {
+      await pm.adminPage.navigateToAdminPage();
+      await pm.adminPage.searchUserByUsername(username);
+      await pm.adminPage.assertUserNotListed(username);
+    });
+  });
 });

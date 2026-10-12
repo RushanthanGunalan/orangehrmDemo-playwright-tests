@@ -17,6 +17,8 @@ export type NewUser = {
   employeeSearchTerm: string;
   username: string;
   password: string;
+  /** Defaults to `password`. Pass a different value to test a mismatch. */
+  confirmPassword?: string;
 };
 
 /**
@@ -79,7 +81,9 @@ export default class AdminPage {
 
     await this.locators.usernameInput.fill(user.username);
     await this.locators.passwordInput.fill(user.password);
-    await this.locators.confirmPasswordInput.fill(user.password);
+    await this.locators.confirmPasswordInput.fill(
+      user.confirmPassword ?? user.password,
+    );
   }
 
   async saveUser() {
@@ -98,6 +102,18 @@ export default class AdminPage {
   }
 
   /**
+   * Waits until the form's messages are exactly `expected` (field name ->
+   * message, "" for none), then fails ONCE with a field -> message diff if
+   * they never become that. Naming the field is the point: separate
+   * assertions each wait out a full timeout and only say "not found".
+   */
+  private async expectFieldErrors(expected: Record<string, string>) {
+    await expect
+      .poll(() => this.readFieldErrors(), { timeout: this.actions.defaultTimeout })
+      .toEqual(expected);
+  }
+
+  /**
    * Asserts the pristine form shows no validation messages yet. It first
    * waits for the form itself: with the page not loaded every message is
    * trivially absent, which would make this check pass without proving
@@ -105,9 +121,9 @@ export default class AdminPage {
    */
   async assertNoFieldErrors() {
     await expect(this.locators.usernameInput).toBeVisible();
-    await expect
-      .poll(() => this.readFieldErrors(), { timeout: this.actions.defaultTimeout })
-      .toEqual(Object.fromEntries(ADD_USER_FIELDS.map((f) => [f.name, ""])));
+    await this.expectFieldErrors(
+      Object.fromEntries(ADD_USER_FIELDS.map((f) => [f.name, ""])),
+    );
   }
 
   /**
@@ -123,16 +139,28 @@ export default class AdminPage {
    * "Required" here, this fails on purpose so a person decides which is right.
    */
   async assertBlankFormErrors() {
-    await expect
-      .poll(() => this.readFieldErrors(), { timeout: this.actions.defaultTimeout })
-      .toEqual({
-        "User Role": "Required",
-        "Employee Name": "Required",
-        Status: "Required",
-        Username: "Required",
-        Password: "Required",
-        "Confirm Password": "Passwords do not match",
-      });
+    await this.expectFieldErrors({
+      "User Role": "Required",
+      "Employee Name": "Required",
+      Status: "Required",
+      Username: "Required",
+      Password: "Required",
+      "Confirm Password": "Passwords do not match",
+    });
+  }
+
+  /**
+   * Asserts a form filled in correctly except for a Confirm Password that
+   * differs from Password shows exactly one message, "Passwords do not
+   * match", on Confirm Password and nothing on any other field. Verified
+   * live: the message appears as soon as the value is typed (it does not wait
+   * for Save), it is case-sensitive, and it clears when the two match again.
+   */
+  async assertOnlyConfirmPasswordMismatch() {
+    await this.expectFieldErrors({
+      ...Object.fromEntries(ADD_USER_FIELDS.map((f) => [f.name, ""])),
+      "Confirm Password": "Passwords do not match",
+    });
   }
 
   /**
@@ -188,5 +216,21 @@ export default class AdminPage {
       expected.employeeName,
       expected.status,
     ]);
+  }
+
+  /**
+   * Asserts the filtered list has NO user with this username - the proof that
+   * a rejected save really created nothing. Waits on "No Records Found" FIRST:
+   * before the search lands the unfiltered table is on screen, and "no row
+   * has this username" would be trivially true, proving nothing. (Verified
+   * live: that message appears twice - as an info toast and as text in the
+   * table - which is why the locator takes .first() instead of being strict.)
+   */
+  async assertUserNotListed(username: string) {
+    await expect(
+      this.locators.noRecordsFoundText.first(),
+      `expected no user "${username}", but the list did not report "No Records Found" - the user may have been created`,
+    ).toBeVisible();
+    await expect(this.locators.userRow(username)).toHaveCount(0);
   }
 }

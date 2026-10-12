@@ -22,5 +22,6 @@
   "TC_TDS_009": "Unit",
   "TC_TDS_010": "Unit",
   "TC_UCF_002": "Functional",
-  "TC_UCF_003": "Negative"
+  "TC_UCF_003": "Negative",
+  "TC_UCF_004": "Negative"
 }
