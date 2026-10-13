@@ -201,4 +201,70 @@ test.describe("Add User", () => {
       await pm.adminPage.assertUserNotListed(username);
     });
   });
+
+  test("TC_UCF_005: Username Shorter Than Minimum Length Is Rejected", async ({ pm, testData }) => {
+    // Same shape as TC_UCF_004: an otherwise VALID form (so length is the only
+    // thing wrong) needs a real employee, created through the API and deleted
+    // by the fixture afterwards.
+    //
+    // Limits verified live before writing this: usernames of 1-4 characters
+    // show "Should be at least 5 characters" (as soon as they are typed, not
+    // just on Save); 5 is accepted; 40 is accepted and 41 shows "Should not
+    // exceed 40 characters" - the maximum is NOT covered by this test.
+    //
+    // The 4- and 5-character values are cut from the random part of a
+    // generated username, so they differ every run and cannot already belong to
+    // an existing user (which would add an "Already exists" message).
+    const name = testData.employeeName();
+    const generated = testData.username();
+    const tooShort = generated.slice(4, 8); // 4 characters
+    const shortestValid = generated.slice(4, 9); // 5 characters
+    const password = testData.password();
+
+    const employee = await test.step(`Arrange: create employee "${name.firstName} ${name.lastName}" via the API`, async () => {
+      return testData.createEmployee(name);
+    });
+
+    await test.step("Act: open Admin > Add User form", async () => {
+      await pm.adminPage.navigateToAdminPage();
+      await pm.adminPage.navigateToAddUser();
+    });
+
+    await test.step(`Act: fill every field validly, but use the 4-character username "${tooShort}"`, async () => {
+      await pm.adminPage.fillUserForm({
+        role: "ESS",
+        status: "Enabled",
+        employeeSearchTerm: employee.lastName,
+        username: tooShort,
+        password,
+      });
+    });
+
+    await test.step('Assert: only Username shows "Should be at least 5 characters"; no other field errors', async () => {
+      await pm.adminPage.assertOnlyFieldError("Username", "Should be at least 5 characters");
+    });
+
+    await test.step("Act: click Save", async () => {
+      await pm.adminPage.saveUser();
+    });
+
+    await test.step("Assert: still on the form, the message is still there, no success toast", async () => {
+      await pm.adminPage.assertStillOnAddUserForm();
+      await pm.adminPage.assertOnlyFieldError("Username", "Should be at least 5 characters");
+    });
+
+    // The boundary: one more character and the same form has no errors at all.
+    // This also proves the length was the ONLY thing wrong with the form.
+    // The form is not submitted again, so no user is created.
+    await test.step(`Assert: the 5-character username "${shortestValid}" clears the message (the minimum is exactly 5)`, async () => {
+      await pm.adminPage.setUsername(shortestValid);
+      await pm.adminPage.assertNoFieldErrors();
+    });
+
+    await test.step(`Assert: no user "${tooShort}" exists in the User Management list`, async () => {
+      await pm.adminPage.navigateToAdminPage();
+      await pm.adminPage.searchUserByUsername(tooShort);
+      await pm.adminPage.assertUserNotListed(tooShort);
+    });
+  });
 });

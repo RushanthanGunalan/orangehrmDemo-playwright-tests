@@ -26,7 +26,15 @@ export type NewUser = {
  * reads; `label` is what the field is found by ("Password" needs an exact
  * regex because it is also a substring of "Confirm Password").
  */
-const ADD_USER_FIELDS: { name: string; label: string | RegExp }[] = [
+export type AddUserFieldName =
+  | "User Role"
+  | "Employee Name"
+  | "Status"
+  | "Username"
+  | "Password"
+  | "Confirm Password";
+
+const ADD_USER_FIELDS: { name: AddUserFieldName; label: string | RegExp }[] = [
   { name: "User Role", label: "User Role" },
   { name: "Employee Name", label: "Employee Name" },
   { name: "Status", label: "Status" },
@@ -90,6 +98,18 @@ export default class AdminPage {
     await this.locators.saveButton.click();
   }
 
+  /**
+   * Replaces just the Username on a form that is already filled in, then
+   * leaves the field (Tab) like a person committing it. Without the Tab, a
+   * run was seen where the previous value's "Should be at least 5
+   * characters" message stayed on screen for a full minute after a valid
+   * value replaced it; leaving the field makes the app validate again.
+   */
+  async setUsername(username: string) {
+    await this.locators.usernameInput.fill(username);
+    await this.locators.usernameInput.press("Tab");
+  }
+
   /** Every Add User field's current validation message ("" when none is shown). */
   private async readFieldErrors(): Promise<Record<string, string>> {
     const errors: Record<string, string> = {};
@@ -114,10 +134,10 @@ export default class AdminPage {
   }
 
   /**
-   * Asserts the pristine form shows no validation messages yet. It first
-   * waits for the form itself: with the page not loaded every message is
-   * trivially absent, which would make this check pass without proving
-   * anything - and it is what proves the messages later are CAUSED by Save.
+   * Asserts no field shows a validation message (on a pristine form, or on a
+   * filled one that is valid). It first waits for the form itself: with the
+   * page not loaded every message is trivially absent, which would make this
+   * check pass without proving anything.
    */
   async assertNoFieldErrors() {
     await expect(this.locators.usernameInput).toBeVisible();
@@ -157,9 +177,18 @@ export default class AdminPage {
    * for Save), it is case-sensitive, and it clears when the two match again.
    */
   async assertOnlyConfirmPasswordMismatch() {
+    await this.assertOnlyFieldError("Confirm Password", "Passwords do not match");
+  }
+
+  /**
+   * Asserts exactly one field shows `message` and every other field shows
+   * nothing - so a test about one rule also proves it did not trip another.
+   * Failure is one field -> message diff.
+   */
+  async assertOnlyFieldError(field: AddUserFieldName, message: string) {
     await this.expectFieldErrors({
       ...Object.fromEntries(ADD_USER_FIELDS.map((f) => [f.name, ""])),
-      "Confirm Password": "Passwords do not match",
+      [field]: message,
     });
   }
 

@@ -330,12 +330,12 @@
     "type": "Negative",
     "module": "Admin - User Management / Add User",
     "scenario": "Username Shorter Than Minimum Length Is Rejected",
-    "steps": "1. Create a new employee in PIM\n2. Go to Admin > User Management and click Add\n3. Fill every field validly, but enter a username below the minimum length\n4. Click Save",
-    "input": "Self-created employee; a 4-character username (minimum length to be confirmed live)",
-    "expected": "A validation error about the username length appears and no user is created. Exact limit and message to be verified live before automating.",
-    "automated": "Planned",
-    "spec": "tests/AddUserTest.spec.ts (planned)",
-    "notes": "Planned, not automated yet. Boundary-style case; verify the actual minimum (and maximum) username length live first - no limit is assumed anywhere in the code."
+    "steps": "1. Create an employee through the API (the form needs a real one)\n2. Log in, go to Admin > User Management and click Add\n3. Fill every field validly, but use a 4-character username\n4. Check only Username shows a message\n5. Click Save\n6. Check the page is still the form, the message remains, and no success toast appeared\n7. Change the username to 5 characters and check no field shows an error\n8. Search the User Management list for the 4-character username",
+    "input": "Self-created employee; a 4-character username and then a 5-character one, both cut from a generated random value (different every run)",
+    "expected": "With a 4-character username, only Username shows \"Should be at least 5 characters\". Save does not go through: the page stays on the Add User form with no success toast. A 5-character username clears the message and the form has no errors (the minimum is exactly 5). Searching the list for the 4-character username returns \"No Records Found\".",
+    "automated": "Yes",
+    "spec": "tests/AddUserTest.spec.ts",
+    "notes": "Verified live before automating: lengths 1-4 show the message, 5 and 6 and 40 are accepted, 41 shows \"Should not exceed 40 characters\" (the maximum is NOT tested here); the message appears as soon as the value is typed, not only on Save; Save sent no create request. The employee is created through the API and deleted by teardown (which would also remove a wrongly created user). The 5-character step presses Tab after typing: one run in ten showed the old message staying on screen for a minute without it. The no-user list check can pass while a create request is still in flight if nothing sits between Save and the search; in this test other steps sit between, and the Username message assertion before Save is the main guard."
   },
   {
     "id": "TC_UCF_006",

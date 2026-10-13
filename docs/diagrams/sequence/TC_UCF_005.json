@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_UCF_005: Username Shorter Than Minimum Length Is Rejected",
+    "output": "docs/diagrams/html/TC_UCF_005.html",
+    "viewBox": [
+      1080,
+      687
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_UCF_005"
+    },
+    {
+      "id": "testdata",
+      "type": "backend",
+      "label": "TestData"
+    },
+    {
+      "id": "adminpage",
+      "type": "backend",
+      "label": "AdminPage"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 609,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 175,
+      "label": "testData.employeeName()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 205,
+      "label": "testData.username()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 235,
+      "label": "testData.password()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 265,
+      "label": "testData.createEmployee()",
+      "variant": "default",
+      "note": "Arrange: create employee \"… …\" via the API"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 295,
+      "label": "adminPage.navigateToAdminPage()",
+      "variant": "default",
+      "note": "Act: open Admin > Add User form"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 325,
+      "label": "adminPage.navigateToAddUser()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 355,
+      "label": "adminPage.fillUserForm()",
+      "variant": "default",
+      "note": "Act: fill every field validly, but use the 4-character username \"…\""
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 385,
+      "label": "adminPage.assertOnlyFieldError()",
+      "variant": "default",
+      "note": "Assert: only Username shows \"Should be at least 5 characters\"; no other field errors"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 415,
+      "label": "adminPage.saveUser()",
+      "variant": "default",
+      "note": "Act: click Save"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 445,
+      "label": "adminPage.assertStillOnAddUserForm()",
+      "variant": "default",
+      "note": "Assert: still on the form, the message is still there, no success toast"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 475,
+      "label": "adminPage.assertOnlyFieldError()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 505,
+      "label": "adminPage.setUsername()",
+      "variant": "default",
+      "note": "Assert: the 5-character username \"…\" clears the message (the minimum is exactly 5)"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 535,
+      "label": "adminPage.assertNoFieldErrors()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 565,
+      "label": "adminPage.navigateToAdminPage()",
+      "variant": "default",
+      "note": "Assert: no user \"…\" exists in the User Management list"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Draft - needs review",
+      "items": [
+        "DRAFT drawn automatically from the spec's direct calls. It shows no returns and nothing below the page-object layer.",
+        "Not source-linked: there are no SRC badges until the test is committed and the diagram is completed.",
+        "Only the first 14 of 16 calls are drawn."
+      ]
+    }
+  ]
+}
