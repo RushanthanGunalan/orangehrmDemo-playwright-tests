@@ -267,4 +267,58 @@ test.describe("Add User", () => {
       await pm.adminPage.assertUserNotListed(tooShort);
     });
   });
+
+  test("TC_UCF_008: Create User With Minimum-Length 5-Character Username", async ({ pm, testData }) => {
+    // The other half of TC_UCF_005's boundary: that test proves 4 characters
+    // is rejected and that 5 clears the message, but never saves the 5. This
+    // one saves it, so "the minimum is exactly 5" rests on a real save and not
+    // only on the form's message. TC_UCF_001/002 use a 12-character username.
+    //
+    // Verified live before writing this: a 5-character username saves (the
+    // create request goes out, the user is listed with the entered values),
+    // and deleting the employee afterwards removes this user too - the list
+    // then reports "No Records Found" for it. The employee is created through
+    // the API and deleted by the fixture, so the user needs no cleanup of its
+    // own.
+    //
+    // The username is cut from the random part of a generated one, so it
+    // differs every run and cannot already belong to another user.
+    const name = testData.employeeName();
+    const username = testData.username().slice(4, 9); // 5 characters
+    const password = testData.password();
+
+    const employee = await test.step(`Arrange: create employee "${name.firstName} ${name.lastName}" via the API`, async () => {
+      return testData.createEmployee(name);
+    });
+
+    await test.step("Act: open Admin > Add User form", async () => {
+      await pm.adminPage.navigateToAdminPage();
+      await pm.adminPage.navigateToAddUser();
+    });
+
+    await test.step(`Act: fill the form for the 5-character username "${username}" (ESS, Enabled) and save`, async () => {
+      await pm.adminPage.fillUserForm({
+        role: "ESS",
+        status: "Enabled",
+        employeeSearchTerm: employee.lastName,
+        username,
+        password,
+      });
+      await pm.adminPage.saveUser();
+    });
+
+    await test.step('Assert: success toast "Successfully Saved" appears', async () => {
+      await pm.adminPage.assertUserSaved();
+    });
+
+    await test.step(`Assert: user "${username}" is listed with the entered values`, async () => {
+      await pm.adminPage.searchUserByUsername(username);
+      await pm.adminPage.assertUserListed({
+        username,
+        role: "ESS",
+        employeeName: `${employee.firstName} ${employee.lastName}`,
+        status: "Enabled",
+      });
+    });
+  });
 });

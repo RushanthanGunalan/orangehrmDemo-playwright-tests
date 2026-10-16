@@ -362,5 +362,18 @@
     "automated": "Planned",
     "spec": "tests/AddUserTest.spec.ts (planned)",
     "notes": "Planned, not automated yet. Creates no data."
+  },
+  {
+    "id": "TC_UCF_008",
+    "priority": "Medium",
+    "type": "Functional",
+    "module": "Admin - User Management / Add User",
+    "scenario": "Create User With Minimum-Length 5-Character Username",
+    "steps": "1. Create an employee through the API (the form needs a real one)\n2. Log in, go to Admin > User Management and click Add\n3. Fill every field validly with a 5-character username (ESS, Enabled)\n4. Click Save\n5. Check the success toast\n6. Search the User Management list for the username and check the row",
+    "input": "Self-created employee; a 5-character username cut from a generated random value (different every run); a generated valid password used for both password fields",
+    "expected": "The user is saved: the toast \"Successfully Saved\" appears and the list shows exactly one row for that username with User Role ESS, the employee's name, and Status Enabled.",
+    "automated": "Yes",
+    "spec": "tests/AddUserTest.spec.ts",
+    "notes": "Added after TC_UCF_005, which proves 4 characters is rejected and 5 clears the message but never saves the 5 - this saves it, so the minimum rests on a real save. Numbered after the planned TC_UCF_006/007 so the plan is not renumbered. Verified live before automating: the save sends the real create request, and deleting the employee afterwards removes this user too (the list then reports \"No Records Found\" for it). The employee is created through the API and deleted by teardown."
   }
 ]
