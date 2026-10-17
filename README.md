@@ -116,6 +116,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for why it's split this way.
 ```bash
 pnpm install                    # install dependencies
 pnpm exec playwright install    # download the Playwright browser binaries
+
 ```
 
 ### Configuration
