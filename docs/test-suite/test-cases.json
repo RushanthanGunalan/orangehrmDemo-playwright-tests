@@ -343,12 +343,12 @@
     "type": "Negative",
     "module": "Admin - User Management / Add User",
     "scenario": "Duplicate Username Is Rejected",
-    "steps": "1. Create two new employees in PIM\n2. Create a user for the first employee\n3. Open Add User again for the second employee and enter the same username\n4. Click Save",
-    "input": "Two self-created employees; one generated username used twice",
-    "expected": "A validation error says the username is already taken and the second user is not created. Exact message to be verified live before automating.",
-    "automated": "Planned",
-    "spec": "tests/AddUserTest.spec.ts (planned)",
-    "notes": "Planned, not automated yet. Needs two employees and one saved user as setup (create via the API); teardown removes both employees and their users."
+    "steps": "1. Create two employees through the API\n2. Create a user for the first employee through the API\n3. Log in, go to Admin > User Management and click Add\n4. Fill every field validly for the SECOND employee, but reuse the first user's username\n5. Check only Username shows a message\n6. Click Save\n7. Check the page is still the form, the message remains, and no success toast appeared\n8. Search the User Management list for that username",
+    "input": "Two self-created employees; one generated username (used for the first user, then typed again for the second); one generated valid password",
+    "expected": "Username shows \"Already exists\" and no other field shows an error. Save does not go through: the page stays on the Add User form with no success toast. Searching the list for that username shows exactly one record, ESS / Enabled, belonging to the FIRST employee.",
+    "automated": "Yes",
+    "spec": "tests/AddUserTest.spec.ts",
+    "notes": "Verified live before automating: the message \"Already exists\" appears as soon as the username is typed (the app asks the server; Save is not needed), the check is case-insensitive (the upper-case form is also taken - observed, not tested), a different username clears it, and Save sent no create request. The first user is created through the API (new OrangeHrmApi.createEssUser / TestData.createUser, using the exact request the form sends, ESS and Enabled only); both employees are deleted by teardown, which removes the user too (verified for an API-created user). The not-created check is the exactly-one-record list result, which can pass while a create is still in flight if nothing sits between Save and the search; the Username message assertion before Save is the main guard."
   },
   {
     "id": "TC_UCF_007",

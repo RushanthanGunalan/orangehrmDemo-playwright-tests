@@ -1,10 +1,20 @@
 import { faker } from "@faker-js/faker";
-import type { EmployeeSummary, NewEmployee } from "../api/OrangeHrmApi";
+import type {
+  EmployeeSummary,
+  NewEmployee,
+  NewSystemUser,
+  SystemUserSummary,
+} from "../api/OrangeHrmApi";
 import { isTestEmployeeId, newEmployeeId } from "./ids";
 import type { EmployeeStore } from "./purge";
 
 export interface TestDataStore extends EmployeeStore {
   createEmployee(employee: NewEmployee): Promise<EmployeeSummary>;
+}
+
+/** Optional on purpose: the offline tests' fake stores only need employees. */
+export interface UserStore {
+  createEssUser(user: NewSystemUser): Promise<SystemUserSummary>;
 }
 
 export type EmployeeName = {
@@ -36,7 +46,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export class TestData {
   private readonly employeeIds = new Set<string>();
 
-  constructor(private readonly store: TestDataStore) {}
+  constructor(private readonly store: TestDataStore & Partial<UserStore>) {}
 
   /** A marker-carrying Employee Id, tracked for cleanup. Use it for ANY employee a test creates. */
   employeeId(): string {
@@ -87,6 +97,25 @@ export class TestData {
       lastName,
       employeeId: this.employeeId(),
     });
+  }
+
+  /**
+   * Creates an ESS / Enabled user for an employee THIS test created, through
+   * the API - for tests that need a user to already exist (e.g. a duplicate
+   * username check). It is not tracked separately: it belongs to the
+   * employee, and deleting the employee in cleanup() removes it too.
+   */
+  async createUser(
+    employee: EmployeeSummary,
+    credentials: { username?: string; password?: string } = {},
+  ): Promise<{ username: string; password: string }> {
+    if (!this.store.createEssUser) {
+      throw new Error("This store cannot create users (it has no createEssUser).");
+    }
+    const username = credentials.username ?? this.username();
+    const password = credentials.password ?? this.password();
+    await this.store.createEssUser({ username, password, empNumber: employee.empNumber });
+    return { username, password };
   }
 
   /**

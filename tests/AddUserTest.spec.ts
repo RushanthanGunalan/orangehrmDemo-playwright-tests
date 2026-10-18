@@ -321,4 +321,74 @@ test.describe("Add User", () => {
       });
     });
   });
+
+  test("TC_UCF_006: Duplicate Username Is Rejected", async ({ pm, testData }) => {
+    // Needs a user that ALREADY exists, so the first user is created through
+    // the API (the form is not what this test is about) for the first of two
+    // self-created employees. Both employees are deleted by the fixture
+    // afterwards, and deleting an employee removes their user (verified live).
+    //
+    // Behaviour verified live before writing this: typing a taken username
+    // shows "Already exists" on Username straight away (the app asks the
+    // server; Save is not needed), the same check is case-insensitive (the
+    // upper-case form is also taken - not tested here), and Save sends no
+    // create request. The first user is the only one that can ever hold this
+    // username, so the list afterwards must show exactly ONE record, and it
+    // must belong to the first employee.
+    const first = testData.employeeName();
+    const second = testData.employeeName();
+    const username = testData.username();
+    const password = testData.password();
+
+    const firstEmployee = await test.step(`Arrange: create employee "${first.firstName} ${first.lastName}" via the API`, async () => {
+      return testData.createEmployee(first);
+    });
+    const secondEmployee = await test.step(`Arrange: create employee "${second.firstName} ${second.lastName}" via the API`, async () => {
+      return testData.createEmployee(second);
+    });
+    await test.step(`Arrange: create user "${username}" for the first employee via the API`, async () => {
+      await testData.createUser(firstEmployee, { username, password });
+    });
+
+    await test.step("Act: open Admin > Add User form", async () => {
+      await pm.adminPage.navigateToAdminPage();
+      await pm.adminPage.navigateToAddUser();
+    });
+
+    await test.step(`Act: fill every field validly for the SECOND employee, but reuse the username "${username}"`, async () => {
+      await pm.adminPage.fillUserForm({
+        role: "ESS",
+        status: "Enabled",
+        employeeSearchTerm: secondEmployee.lastName,
+        username,
+        password,
+      });
+    });
+
+    await test.step('Assert: only Username shows "Already exists"; no other field errors', async () => {
+      await pm.adminPage.assertOnlyFieldError("Username", "Already exists");
+    });
+
+    await test.step("Act: click Save", async () => {
+      await pm.adminPage.saveUser();
+    });
+
+    await test.step("Assert: still on the form, the message is still there, no success toast", async () => {
+      await pm.adminPage.assertStillOnAddUserForm();
+      await pm.adminPage.assertOnlyFieldError("Username", "Already exists");
+    });
+
+    // Exactly one record, and it is the FIRST employee's: no second user was
+    // created, and the existing one was not taken over.
+    await test.step(`Assert: the list shows exactly one user "${username}", belonging to the first employee`, async () => {
+      await pm.adminPage.navigateToAdminPage();
+      await pm.adminPage.searchUserByUsername(username);
+      await pm.adminPage.assertUserListed({
+        username,
+        role: "ESS",
+        employeeName: `${firstEmployee.firstName} ${firstEmployee.lastName}`,
+        status: "Enabled",
+      });
+    });
+  });
 });

@@ -31,6 +31,19 @@ export type NewEmployee = {
   employeeId: string;
 };
 
+/** An Admin > User Management login attached to an employee. */
+export type NewSystemUser = {
+  username: string;
+  password: string;
+  /** The employee the user belongs to (EmployeeSummary.empNumber). */
+  empNumber: number;
+};
+
+export type SystemUserSummary = {
+  id: number;
+  userName: string;
+};
+
 export type Credentials = { username: string; password: string };
 
 /** An HTTP answer we got but won't retry (a 4xx): the request itself is wrong. */
@@ -150,6 +163,29 @@ export class OrangeHrmApi {
         lastName: employee.lastName,
         empPicture: null,
         employeeId: employee.employeeId,
+      },
+    );
+    return body.data;
+  }
+
+  /**
+   * Creates an ESS-role, Enabled user for an existing employee - the same
+   * request the Add User form sends (captured live: POST /api/v2/admin/users
+   * with userRoleId 2 for ESS, status true, and the empNumber). Only ESS and
+   * Enabled are supported because only those were observed. The user needs no
+   * cleanup of its own: deleting its employee removes it (verified live).
+   * A taken username answers 422.
+   */
+  async createEssUser(user: NewSystemUser): Promise<SystemUserSummary> {
+    const body = await this.call<{ data: SystemUserSummary }>(
+      "POST",
+      "/web/index.php/api/v2/admin/users",
+      {
+        username: user.username,
+        password: user.password,
+        status: true,
+        userRoleId: 2,
+        empNumber: user.empNumber,
       },
     );
     return body.data;
