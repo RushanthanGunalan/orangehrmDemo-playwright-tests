@@ -98,6 +98,38 @@ export default class AdminPage {
     await this.locators.saveButton.click();
   }
 
+  /** Leaves the Add User form without saving. */
+  async cancelAddUser() {
+    await this.locators.cancelButton.click();
+  }
+
+  /**
+   * Asserts we are on the User Management LIST, not the Add User form. Three
+   * independent signs, because any one alone is weak: the list's URL (waiting
+   * for the redirect - the click returns before it lands), the list's "Add"
+   * button, and the form's "Save" button being GONE. Deliberately no check on
+   * how many users the list shows: the demo is shared and that number changes
+   * whenever anyone adds one.
+   */
+  async assertOnUserList() {
+    await expect(this.page).toHaveURL(/\/admin\/viewSystemUsers/);
+    await expect(this.locators.addButton).toBeVisible();
+    await expect(this.locators.saveButton).toHaveCount(0);
+  }
+
+  /**
+   * Asserts a freshly opened Add User form has nothing carried over from an
+   * earlier, cancelled attempt. Waits for the form's own URL first: the list
+   * has a "Username" search box found the same way, which would otherwise be
+   * checked instead.
+   */
+  async assertAddUserFormIsBlank() {
+    await expect(this.page).toHaveURL(/\/admin\/saveSystemUser/);
+    await expect(this.locators.usernameInput).toHaveValue("");
+    await expect(this.locators.passwordInput).toHaveValue("");
+    await expect(this.locators.confirmPasswordInput).toHaveValue("");
+  }
+
   /**
    * Replaces just the Username on a form that is already filled in, then
    * leaves the field (Tab) like a person committing it. Without the Tab, a

@@ -32,6 +32,7 @@ export type AdminPageLocators = {
   passwordInput: Locator;
   confirmPasswordInput: Locator;
   saveButton: Locator;
+  cancelButton: Locator;
   successToastMessage: Locator;
   /** The validation message under one field, found by that field's label. */
   fieldError: (labelText: string | RegExp) => Locator;
@@ -96,6 +97,8 @@ export function adminPageLocators(page: Page): AdminPageLocators {
     passwordInput: inputGroupByLabel(page, /^Password$/),
     confirmPasswordInput: inputGroupByLabel(page, "Confirm Password"),
     saveButton: page.getByRole("button", { name: "Save" }),
+    // Verified live: exactly one on the Add User form, and none on the list.
+    cancelButton: page.getByRole("button", { name: "Cancel" }),
     successToastMessage: toastLocators(page).successMessage,
     fieldError: (labelText: string | RegExp) =>
       fieldErrorByLabel(page, labelText),

@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_UCF_007: Cancel Add User Returns To User List",
+    "output": "docs/diagrams/html/TC_UCF_007.html",
+    "viewBox": [
+      1080,
+      657
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_UCF_007"
+    },
+    {
+      "id": "testdata",
+      "type": "backend",
+      "label": "TestData"
+    },
+    {
+      "id": "adminpage",
+      "type": "backend",
+      "label": "AdminPage"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 579,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 175,
+      "label": "testData.employeeName()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 205,
+      "label": "testData.username()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 235,
+      "label": "testData.password()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 265,
+      "label": "testData.createEmployee()",
+      "variant": "default",
+      "note": "Arrange: create employee \"… …\" via the API"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 295,
+      "label": "adminPage.navigateToAdminPage()",
+      "variant": "default",
+      "note": "Act: open Admin > Add User form"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 325,
+      "label": "adminPage.navigateToAddUser()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 355,
+      "label": "adminPage.fillUserForm()",
+      "variant": "default",
+      "note": "Act: fill every field validly for user \"…\" (ESS, Enabled), but do not save"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 385,
+      "label": "adminPage.cancelAddUser()",
+      "variant": "default",
+      "note": "Act: click Cancel"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 415,
+      "label": "adminPage.assertOnUserList()",
+      "variant": "default",
+      "note": "Assert: back on the User Management list (not the form)"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 445,
+      "label": "adminPage.searchUserByUsername()",
+      "variant": "default",
+      "note": "Assert: no user \"…\" exists in the list"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 475,
+      "label": "adminPage.assertUserNotListed()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 505,
+      "label": "adminPage.navigateToAddUser()",
+      "variant": "default",
+      "note": "Assert: reopening the Add User form shows it blank"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 535,
+      "label": "adminPage.assertAddUserFormIsBlank()",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Draft - needs review",
+      "items": [
+        "DRAFT drawn automatically from the spec's direct calls. It shows no returns and nothing below the page-object layer.",
+        "Not source-linked: there are no SRC badges until the test is committed and the diagram is completed."
+      ]
+    }
+  ]
+}

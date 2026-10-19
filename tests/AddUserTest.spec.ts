@@ -391,4 +391,58 @@ test.describe("Add User", () => {
       });
     });
   });
+
+  test("TC_UCF_007: Cancel Add User Returns To User List", async ({ pm, testData }) => {
+    // The form is filled in COMPLETELY and validly before Cancel. That is what
+    // makes "no user was created" mean something: a half-empty form could
+    // never be saved anyway, so cancelling it would prove nothing. If Cancel
+    // ever saved instead, this user would exist and the list check would fail.
+    // The employee it needs is created through the API and deleted by the
+    // fixture afterwards (which would also remove a wrongly created user).
+    //
+    // Behaviour verified live before writing this: Cancel goes straight to
+    // /admin/viewSystemUsers - no confirmation dialog, even with data typed in -
+    // sends no create request, and a reopened form starts completely blank.
+    const name = testData.employeeName();
+    const username = testData.username();
+    const password = testData.password();
+
+    const employee = await test.step(`Arrange: create employee "${name.firstName} ${name.lastName}" via the API`, async () => {
+      return testData.createEmployee(name);
+    });
+
+    await test.step("Act: open Admin > Add User form", async () => {
+      await pm.adminPage.navigateToAdminPage();
+      await pm.adminPage.navigateToAddUser();
+    });
+
+    await test.step(`Act: fill every field validly for user "${username}" (ESS, Enabled), but do not save`, async () => {
+      await pm.adminPage.fillUserForm({
+        role: "ESS",
+        status: "Enabled",
+        employeeSearchTerm: employee.lastName,
+        username,
+        password,
+      });
+    });
+
+    await test.step("Act: click Cancel", async () => {
+      await pm.adminPage.cancelAddUser();
+    });
+
+    await test.step("Assert: back on the User Management list (not the form)", async () => {
+      await pm.adminPage.assertOnUserList();
+    });
+
+    await test.step(`Assert: no user "${username}" exists in the list`, async () => {
+      await pm.adminPage.searchUserByUsername(username);
+      await pm.adminPage.assertUserNotListed(username);
+    });
+
+    // Shows the cancelled attempt was discarded, not just hidden.
+    await test.step("Assert: reopening the Add User form shows it blank", async () => {
+      await pm.adminPage.navigateToAddUser();
+      await pm.adminPage.assertAddUserFormIsBlank();
+    });
+  });
 });

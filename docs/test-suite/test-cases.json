@@ -356,12 +356,12 @@
     "type": "Functional",
     "module": "Admin - User Management / Add User",
     "scenario": "Cancel Add User Returns To User List",
-    "steps": "1. Log in\n2. Go to Admin > User Management and click Add\n3. Click Cancel",
-    "input": "n/a",
-    "expected": "User is returned to the User Management list and no user is created. Exact URL to be verified live before automating.",
-    "automated": "Planned",
-    "spec": "tests/AddUserTest.spec.ts (planned)",
-    "notes": "Planned, not automated yet. Creates no data."
+    "steps": "1. Create an employee through the API (the form needs a real one)\n2. Log in, go to Admin > User Management and click Add\n3. Fill every field validly (ESS, Enabled) but do not save\n4. Click Cancel\n5. Check the page is the User Management list, not the form\n6. Search the list for the username\n7. Click Add again and check the form is blank",
+    "input": "Self-created employee; a generated username and a generated valid password, typed into the form and then abandoned",
+    "expected": "Cancel returns to /admin/viewSystemUsers: the list's Add button is shown and the form's Save button is gone. Searching for the username returns \"No Records Found\" (the cancelled user was not created). Reopening the Add User form shows empty Username, Password and Confirm Password.",
+    "automated": "Yes",
+    "spec": "tests/AddUserTest.spec.ts",
+    "notes": "Verified live before automating: Cancel goes straight to the list with no confirmation dialog even when data is typed in, sends no create request, and a reopened form starts blank. The form is filled COMPLETELY so that \"no user created\" means something - a half-empty form could never be saved anyway. The employee is created through the API and deleted by teardown. The user count on the list is deliberately not checked: the demo is shared and it changes whenever anyone adds a user. Note the \"back on the list\" check alone would also pass if Save were clicked (Save also lands on the list); the no-user check is what separates them."
   },
   {
     "id": "TC_UCF_008",
