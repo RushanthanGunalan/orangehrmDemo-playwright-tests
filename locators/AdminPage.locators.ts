@@ -17,6 +17,7 @@ export type AdminPageLocators = {
   addButton: Locator;
   searchUsernameInput: Locator;
   searchButton: Locator;
+  resetButton: Locator;
   recordsFoundText: Locator;
   noRecordsFoundText: Locator;
   userRow: (username: string) => Locator;
@@ -59,6 +60,9 @@ export function adminPageLocators(page: Page): AdminPageLocators {
     // wait for the right URL before using either (see AdminPage.ts).
     searchUsernameInput: inputGroupByLabel(page, "Username"),
     searchButton: page.getByRole("button", { name: "Search" }),
+    // Verified live: clicking it empties the search box and brings back the
+    // full, unfiltered list. It only exists on the list, not on the Add User form.
+    resetButton: page.getByRole("button", { name: "Reset" }),
     // "(1) Record Found" / "(11) Records Found" - the count text changes
     // when a search filter lands, which makes it the signal to wait on:
     // the unfiltered table already has rows, so "a row exists" proves

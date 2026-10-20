@@ -294,4 +294,25 @@ export default class AdminPage {
     ).toBeVisible();
     await expect(this.locators.userRow(username)).toHaveCount(0);
   }
+
+  /** Clears the user search (the list's Reset button). */
+  async resetUserSearch() {
+    await this.locators.resetButton.click();
+  }
+
+  /**
+   * Asserts the search was reset: the username box is empty AND the list is
+   * unfiltered again. "Unfiltered" is checked as "two or more records", never
+   * as a number - the demo is shared and the total changes whenever anyone
+   * adds or removes a user. It also cannot pass early: right after a search
+   * the text still says "(1) Record Found", and this waits until it does not.
+   */
+  async assertUserSearchIsReset() {
+    await expect(this.locators.searchUsernameInput).toHaveValue("");
+    // The page text has a leading space (" (33) Records Found") and a regex
+    // match, unlike a string match, does not trim it - hence the \s*.
+    await expect(this.locators.recordsFoundText).toHaveText(
+      /^\s*\(([2-9]|\d{2,})\) Records Found\s*$/,
+    );
+  }
 }
