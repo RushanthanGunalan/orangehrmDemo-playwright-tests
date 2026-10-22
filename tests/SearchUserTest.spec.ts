@@ -55,4 +55,30 @@ test.describe("Search User", () => {
       await pm.adminPage.assertUserSearchIsReset();
     });
   });
+
+  test("TC_USF_002: Search For A Username That Does Not Exist Shows No Records", async ({ pm, testData }) => {
+    // No data: nothing is created, so nothing needs cleaning up. The username
+    // is only GENERATED (qar_ + random characters) and is not saved anywhere,
+    // so no user can have it.
+    //
+    // Behaviour verified live before writing this: the table shows its own
+    // "No Records Found" (plus a fading info toast with the same words), the
+    // "(N) Records Found" count disappears, and only the header row is left.
+    // Searching "Admi" (part of the existing "Admin") also finds nothing -
+    // the username search is an exact match, not "starts with" - which was
+    // only observed here, not asserted.
+    const username = testData.username();
+
+    await test.step("Act: open Admin > User Management", async () => {
+      await pm.adminPage.navigateToAdminPage();
+    });
+
+    await test.step(`Act: search for the username "${username}", which no user has`, async () => {
+      await pm.adminPage.searchUserByUsername(username);
+    });
+
+    await test.step('Assert: the table says "No Records Found" and no user row is shown', async () => {
+      await pm.adminPage.assertSearchFoundNoUsers();
+    });
+  });
 });

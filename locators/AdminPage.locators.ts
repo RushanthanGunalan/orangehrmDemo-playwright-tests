@@ -20,6 +20,8 @@ export type AdminPageLocators = {
   resetButton: Locator;
   recordsFoundText: Locator;
   noRecordsFoundText: Locator;
+  noRecordsTableMessage: Locator;
+  tableRows: Locator;
   userRow: (username: string) => Locator;
   dataCellsInRow: (row: Locator) => Locator;
 
@@ -72,6 +74,13 @@ export function adminPageLocators(page: Page): AdminPageLocators {
     // toast and the table's own message) and no "(N) Records Found" text, so
     // callers must use .first(), never a strict match.
     noRecordsFoundText: page.getByText("No Records Found"),
+    // Verified live: of those two, the table's own message is a <span> and the
+    // toast's is a <p>, so filtering on the tag picks exactly the table's. That
+    // is the one to assert on: the toast fades away on its own.
+    noRecordsTableMessage: page.locator("span", { hasText: "No Records Found" }),
+    // Every table row, header included. With no results only the header is left
+    // (verified live), and the Admin list has no other table on the page.
+    tableRows: page.getByRole("row"),
     // Verified live: table rows are role="row" and cells role="cell" with
     // clean accessible names, so no CSS classes are needed. The header row
     // never contains a username, so hasText can't match it.

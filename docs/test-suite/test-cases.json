@@ -395,12 +395,12 @@
     "type": "Negative",
     "module": "Admin - User Management / Search User",
     "scenario": "Search For A Username That Does Not Exist Shows No Records",
-    "steps": "1. Log in, go to Admin > User Management\n2. Enter a generated username that no user has\n3. Click Search",
-    "input": "A generated username (qar_ + random) that does not exist",
-    "expected": "The list reports \"No Records Found\" and shows no row for that username.",
-    "automated": "Planned",
-    "spec": "tests/SearchUserTest.spec.ts (planned)",
-    "notes": "Planned, not automated yet. Creates no data. Seen live: the message appears twice (an info toast and the table text), so the locator must not be strict. Partly exercised already by the not-created checks in TC_UCF_004/005/007, but not as the subject of a test."
+    "steps": "1. Log in, go to Admin > User Management\n2. Enter a generated username that no user has\n3. Click Search\n4. Check the table's message, the records count text and the table rows",
+    "input": "A generated username (qar_ + random) that is only generated, never saved, so no user can have it",
+    "expected": "The table shows \"No Records Found\", the \"(N) Records Found\" count text is gone, and no data row is left (only the table's header row).",
+    "automated": "Yes",
+    "spec": "tests/SearchUserTest.spec.ts",
+    "notes": "Creates no data, so nothing to clean up. Verified live before automating: the words \"No Records Found\" appear twice - as the table's own <span> and as a fading info toast <p> - so the test asserts on the table's message (filtered by tag), not the toast; the count text disappears; only the header row remains; the search box keeps the typed value. Also observed, NOT asserted: searching \"Admi\" (part of the existing \"Admin\") finds nothing - the username search is an exact match, not \"starts with\". The number of users is never checked: it was 33, then 27, then 4 on different days. Partly exercised before by the not-created checks in TC_UCF_004/005/007, but not as the subject of a test."
   },
   {
     "id": "TC_USF_003",

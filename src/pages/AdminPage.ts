@@ -295,6 +295,20 @@ export default class AdminPage {
     await expect(this.locators.userRow(username)).toHaveCount(0);
   }
 
+  /**
+   * Asserts the current search found NOTHING, from the user's point of view:
+   * the table says "No Records Found" (its own message, not the fading
+   * toast), the "(N) Records Found" count is gone, and no data row is left -
+   * only the header. It waits on the message first: until the search lands
+   * the unfiltered table is on screen, where "no data rows" would be false and
+   * "no count" would be false too, but a check made too early proves nothing.
+   */
+  async assertSearchFoundNoUsers() {
+    await expect(this.locators.noRecordsTableMessage).toBeVisible();
+    await expect(this.locators.recordsFoundText).toHaveCount(0);
+    await expect(this.locators.tableRows).toHaveCount(1); // the header row only
+  }
+
   /** Clears the user search (the list's Reset button). */
   async resetUserSearch() {
     await this.locators.resetButton.click();

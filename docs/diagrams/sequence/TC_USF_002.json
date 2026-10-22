@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_USF_002: Search For A Username That Does Not Exist Shows No Records",
+    "output": "docs/diagrams/html/TC_USF_002.html",
+    "viewBox": [
+      1080,
+      480
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_USF_002"
+    },
+    {
+      "id": "testdata",
+      "type": "backend",
+      "label": "TestData"
+    },
+    {
+      "id": "adminpage",
+      "type": "backend",
+      "label": "AdminPage"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 309,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 175,
+      "label": "testData.username()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 205,
+      "label": "adminPage.navigateToAdminPage()",
+      "variant": "default",
+      "note": "Act: open Admin > User Management"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 235,
+      "label": "adminPage.searchUserByUsername()",
+      "variant": "default",
+      "note": "Act: search for the username \"…\", which no user has"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 265,
+      "label": "adminPage.assertSearchFoundNoUsers()",
+      "variant": "default",
+      "note": "Assert: the table says \"No Records Found\" and no user row is shown"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Draft - needs review",
+      "items": [
+        "DRAFT drawn automatically from the spec's direct calls. It shows no returns and nothing below the page-object layer.",
+        "Not source-linked: there are no SRC badges until the test is committed and the diagram is completed."
+      ]
+    }
+  ]
+}
