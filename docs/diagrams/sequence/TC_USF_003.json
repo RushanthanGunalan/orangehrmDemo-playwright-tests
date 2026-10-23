@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "TC_USF_003: Filtering By User Role And Status Narrows The Search",
+    "output": "docs/diagrams/html/TC_USF_003.html",
+    "viewBox": [
+      1080,
+      627
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "participants": [
+    {
+      "id": "spec",
+      "type": "backend",
+      "label": "Spec",
+      "sublabel": "TC_USF_003"
+    },
+    {
+      "id": "testdata",
+      "type": "backend",
+      "label": "TestData"
+    },
+    {
+      "id": "adminpage",
+      "type": "backend",
+      "label": "AdminPage"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 549,
+      "label": "Test"
+    }
+  ],
+  "messages": [
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 175,
+      "label": "testData.employeeName()",
+      "variant": "default"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 205,
+      "label": "testData.createEmployee()",
+      "variant": "default",
+      "note": "Arrange: create employee \"… …\" via the API"
+    },
+    {
+      "from": "spec",
+      "to": "testdata",
+      "y": 235,
+      "label": "testData.createUser()",
+      "variant": "default",
+      "note": "Arrange: create an ESS / Enabled user for it via the API"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 265,
+      "label": "adminPage.navigateToAdminPage()",
+      "variant": "default",
+      "note": "Act: open Admin > User Management"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 295,
+      "label": "adminPage.filterUsers()",
+      "variant": "default",
+      "note": "Act: search \"…\" with User Role = ESS and Status = Enabled (the user's own values)"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 325,
+      "label": "adminPage.assertUserListed()",
+      "variant": "default",
+      "note": "Assert: the user is found"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 355,
+      "label": "adminPage.filterUsers()",
+      "variant": "default",
+      "note": "Act: search the same username with Status = Disabled"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 385,
+      "label": "adminPage.assertSearchFoundNoUsers()",
+      "variant": "default",
+      "note": "Assert: no user is found (the status filter excluded it)"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 415,
+      "label": "adminPage.filterUsers()",
+      "variant": "default",
+      "note": "Act: go back to User Role = ESS and Status = Enabled"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 445,
+      "label": "adminPage.assertUserListed()",
+      "variant": "default",
+      "note": "Assert: the user is found again"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 475,
+      "label": "adminPage.filterUsers()",
+      "variant": "default",
+      "note": "Act: search the same username with User Role = Admin"
+    },
+    {
+      "from": "spec",
+      "to": "adminpage",
+      "y": 505,
+      "label": "adminPage.assertSearchFoundNoUsers()",
+      "variant": "default",
+      "note": "Assert: no user is found (the role filter excluded it)"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Draft - needs review",
+      "items": [
+        "DRAFT drawn automatically from the spec's direct calls. It shows no returns and nothing below the page-object layer.",
+        "Not source-linked: there are no SRC badges until the test is committed and the diagram is completed."
+      ]
+    }
+  ]
+}

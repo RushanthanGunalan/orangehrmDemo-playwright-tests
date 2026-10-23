@@ -253,6 +253,32 @@ export default class AdminPage {
   }
 
   /**
+   * Searches the User Management list by username AND, optionally, the User
+   * Role and Status filters. Pass every filter you want applied each time: a
+   * dropdown keeps the value chosen on the previous search, so a search that
+   * omits one is not "any" - it is "whatever was picked last" (only Reset
+   * puts them back to "-- Select --", verified live). The options are the
+   * ones the list offers: Admin / ESS and Enabled / Disabled.
+   */
+  async filterUsers(filters: {
+    username: string;
+    role?: NewUser["role"];
+    status?: NewUser["status"];
+  }) {
+    await this.page.waitForURL("**/admin/viewSystemUsers");
+    await this.locators.searchUsernameInput.fill(filters.username);
+    if (filters.role) {
+      await this.locators.userRoleSelect.click();
+      await this.locators.optionByName(filters.role).click();
+    }
+    if (filters.status) {
+      await this.locators.statusSelect.click();
+      await this.locators.optionByName(filters.status).click();
+    }
+    await this.locators.searchButton.click();
+  }
+
+  /**
    * Asserts the filtered list shows exactly this user with these values.
    * Waits on the "(1) Record Found" text first - the unfiltered table
    * already has rows, so without that the checks below could read the table

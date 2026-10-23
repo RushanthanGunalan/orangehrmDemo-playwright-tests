@@ -408,12 +408,12 @@
     "type": "Functional",
     "module": "Admin - User Management / Search User",
     "scenario": "Filtering By User Role And Status Narrows The Search",
-    "steps": "1. Create an employee and an ESS / Enabled user through the API\n2. Log in, go to Admin > User Management\n3. Search the username with User Role = ESS and Status = Enabled\n4. Check the user is listed\n5. Search the same username with Status = Disabled\n6. Check no records are found",
-    "input": "Self-created ESS / Enabled user; filters ESS, Enabled, then Disabled",
-    "expected": "The user is found with the matching role and status filters and not found with Status = Disabled.",
-    "automated": "Planned",
-    "spec": "tests/SearchUserTest.spec.ts (planned)",
-    "notes": "Planned, not automated yet. To verify live: the list's User Role and Status dropdowns (found by label like the Add User form's) and how they combine with the username box."
+    "steps": "1. Create an employee and an ESS / Enabled user through the API\n2. Log in, go to Admin > User Management\n3. Search the username with User Role = ESS and Status = Enabled; check the user is listed\n4. Search the same username with Status = Disabled; check no records are found\n5. Search again with ESS and Enabled; check the user is listed again\n6. Search the same username with User Role = Admin; check no records are found",
+    "input": "Self-created ESS / Enabled user; the same username searched with ESS+Enabled, ESS+Disabled, ESS+Enabled, Admin+Enabled",
+    "expected": "The user is found with its own role and status, and NOT found when the Status filter is Disabled or when the User Role filter is Admin. Putting the matching filters back finds the user again. Each \"none\" shows the table's \"No Records Found\" with no row.",
+    "automated": "Yes",
+    "spec": "tests/SearchUserTest.spec.ts",
+    "notes": "The employee and user are created through the API and deleted by teardown. Verified live before automating: the list's User Role dropdown offers Admin / ESS and Status offers Enabled / Disabled (both found by label with the same helpers as the Add User form); with the username they narrow the result exactly as above; a dropdown keeps its last value between searches, so every search sets both; Reset clears the dropdowns too. The order alternates found / none / found / none ON PURPOSE: shown by mutation that two \"none\" results in a row, with the second search skipped, PASS WRONGLY on the previous result's message still being on screen. Only filters combined with the username are tested; a role or status filter alone is not (it returns other people's users, whose number changes)."
   },
   {
     "id": "TC_UEF_001",
