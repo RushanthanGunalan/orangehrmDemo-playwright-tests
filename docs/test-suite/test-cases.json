@@ -421,12 +421,12 @@
     "type": "Functional",
     "module": "Admin - User Management / Edit User",
     "scenario": "Edit User Status From Enabled To Disabled",
-    "steps": "1. Create an employee and an ESS / Enabled user through the API\n2. Log in, go to Admin > User Management and search the username\n3. Click the row's edit (pencil) button\n4. Change Status to Disabled and click Save\n5. Check the success toast\n6. Search the username again and check the row shows Disabled",
-    "input": "Self-created ESS / Enabled user",
-    "expected": "The success toast appears and the list shows the user with Status Disabled (other columns unchanged).",
-    "automated": "Planned",
-    "spec": "tests/EditUserTest.spec.ts (planned)",
-    "notes": "Planned, not automated yet. To verify live: the edit form's fields, which are locked, the toast text, and whether saving needs the password. Seen live: the row's edit and delete icons are buttons with NO accessible name (only icon classes bi-pencil-fill / bi-trash), so they need an icon-based locator with a comment."
+    "steps": "1. Create an employee and an ESS / Enabled user through the API\n2. Log in, go to Admin > User Management and search the username; check it starts as ESS / Enabled\n3. Click the row's edit (pencil) button\n4. Wait for the edit form to load the user's values (ESS, Enabled, the username)\n5. Change Status to Disabled and click Save\n6. Check the toast \"Successfully Updated\"\n7. Search the username again and check the row shows Disabled with everything else unchanged",
+    "input": "Self-created ESS / Enabled user (generated username)",
+    "expected": "The toast \"Successfully Updated\" appears, the page returns to the user list, and searching the username shows exactly one row: same username, ESS, same employee name, and Status Disabled.",
+    "automated": "Yes",
+    "spec": "tests/EditUserTest.spec.ts",
+    "notes": "The employee and user are created through the API and deleted by teardown (which removes the user). Verified live before automating: the row's edit and delete icons are buttons with NO accessible name (bare icons), so the edit button is found by its icon class bi-pencil-fill inside the row, with a comment; the edit form lives at /admin/saveSystemUser/<id> with the heading \"Edit User\"; it OPENS EMPTY and fills in about 3 seconds later, so the test waits for the username to appear before touching anything (a change made earlier could be overwritten or saved against blank fields); \"Change Password ?\" is unchecked, so no password is needed; Save sends one PUT /api/v2/admin/users/<id> and the toast shows BEFORE the redirect, which lands a few seconds later; the form shows the employee name with a doubled space where the list has one, so the name is only checked in the list. Shown by mutation: the \"Successfully Updated\" toast also appears when NOTHING was changed, so the toast does not prove the edit - the final list row does. Only ESS and Enabled -> Disabled is covered; changing the role is not (that could create an Admin on the shared demo)."
   },
   {
     "id": "TC_UEF_002",

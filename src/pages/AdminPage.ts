@@ -241,6 +241,54 @@ export default class AdminPage {
   }
 
   /**
+   * The toast after EDITING a user says "Successfully Updated" (verified
+   * live), not "Successfully Saved" like adding one. It appears BEFORE the
+   * redirect to the list, which lands a few seconds later - searchUserBy
+   * Username() waits for that redirect.
+   */
+  async assertUserUpdated() {
+    await expect(this.locators.successToastMessage).toBeVisible();
+    await expect(this.locators.successToastMessage).toHaveText(
+      "Successfully Updated",
+    );
+  }
+
+  /**
+   * Opens the edit form of the (single) user the list currently shows for
+   * this username, by clicking the row's edit icon.
+   */
+  async openEditUser(username: string) {
+    await this.locators.editButtonInRow(this.locators.userRow(username)).click();
+    await this.page.waitForURL("**/admin/saveSystemUser/**");
+  }
+
+  /**
+   * Asserts the edit form is LOADED and shows this user's current role,
+   * status and username. Not optional before editing: verified live that the
+   * form opens EMPTY ("-- Select --", blank username) and fills in about 3
+   * seconds later, so a change made too early can be overwritten by the late
+   * data - or saved against blank fields. The username is checked first
+   * because it is the last thing to appear. (The Employee Name is not
+   * checked here: the form shows it with a doubled space, the list does not.)
+   */
+  async assertEditFormShows(expected: {
+    username: string;
+    role: NewUser["role"];
+    status: NewUser["status"];
+  }) {
+    await expect(this.locators.usernameInput).toHaveValue(expected.username);
+    await expect(this.locators.userRoleSelect).toHaveText(expected.role);
+    await expect(this.locators.statusSelect).toHaveText(expected.status);
+  }
+
+  /** Picks a different Status in the (add or edit) user form's dropdown. */
+  async setUserStatus(status: NewUser["status"]) {
+    await this.locators.statusSelect.click();
+    await this.locators.optionByName(status).click();
+    await expect(this.locators.statusSelect).toHaveText(status);
+  }
+
+  /**
    * Filters the User Management list to one username. Waits for the list
    * URL first: the Add User form ALSO has a "Username" field, so right
    * after Save (before the redirect lands) the same locator would resolve to

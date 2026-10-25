@@ -30,5 +30,6 @@
   "TC_UCF_007": "Functional",
   "TC_USF_001": "Functional",
   "TC_USF_002": "Negative",
-  "TC_USF_003": "Functional"
+  "TC_USF_003": "Functional",
+  "TC_UEF_001": "Functional"
 }

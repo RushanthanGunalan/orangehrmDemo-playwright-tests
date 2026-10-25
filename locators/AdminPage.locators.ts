@@ -24,6 +24,7 @@ export type AdminPageLocators = {
   tableRows: Locator;
   userRow: (username: string) => Locator;
   dataCellsInRow: (row: Locator) => Locator;
+  editButtonInRow: (row: Locator) => Locator;
 
   // --- Add User form ---
   userRoleSelect: Locator;
@@ -95,6 +96,15 @@ export function adminPageLocators(page: Page): AdminPageLocators {
         .getByRole("cell")
         .filter({ hasNot: page.getByRole("checkbox") })
         .filter({ hasNot: page.getByRole("button") }),
+    // The row's edit (pencil) button. Verified live: the row has exactly two
+    // buttons, edit and delete, and NEITHER has an accessible name or a label
+    // (they are bare icons), so getByRole("button", { name }) cannot find
+    // them. The icon's own class is the only distinguishing mark available:
+    // bi-pencil-fill for edit (bi-trash for delete). That class belongs to
+    // the icon library, so if the icons are ever swapped this is the one
+    // place to update.
+    editButtonInRow: (row: Locator) =>
+      row.locator("button:has(i.bi-pencil-fill)"),
 
     // --- Add User form ---
     // Verified live: none of these inputs have a name/id, so they're found
