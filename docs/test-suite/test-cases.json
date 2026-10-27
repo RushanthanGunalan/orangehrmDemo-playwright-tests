@@ -434,12 +434,12 @@
     "type": "Negative",
     "module": "Admin - User Management / Edit User",
     "scenario": "Editing A User To A Username That Is Already Taken Is Rejected",
-    "steps": "1. Create two employees and one user each through the API\n2. Log in, search the second user and open its edit form\n3. Change the username to the first user's username\n4. Click Save",
-    "input": "Two self-created users with different generated usernames",
-    "expected": "Username shows \"Already exists\" (as on the Add User form), the page stays on the edit form, and the second user keeps its original username.",
-    "automated": "Planned",
-    "spec": "tests/EditUserTest.spec.ts (planned)",
-    "notes": "Planned, not automated yet. To verify live whether the edit form checks uniqueness the same way as the Add User form (\"Already exists\" appeared as soon as the value was typed there)."
+    "steps": "1. Create two employees and one ESS / Enabled user each through the API\n2. Log in, search the second user and open its edit form; wait for it to load\n3. Change the username to the first user's username\n4. Check only Username shows a message\n5. Click Save\n6. Check the page is still the edit form, the message remains, and no success toast appeared\n7. Click Cancel\n8. Search the second user's ORIGINAL username and check it is unchanged\n9. Search the taken username and check it still shows exactly the first user",
+    "input": "Two self-created ESS / Enabled users with different generated usernames; the second user's username changed to the first's",
+    "expected": "Username shows \"Already exists\" and no other field shows an error. Save does not go through: the page stays on /admin/saveSystemUser/<id> with no success toast. After Cancel, the second user is still listed under its original username, and the taken username shows exactly one record - the first user's.",
+    "automated": "Yes",
+    "spec": "tests/EditUserTest.spec.ts",
+    "notes": "Both employees and their users are created through the API and deleted by teardown (which removes the users). Verified live before automating: the edit form checks uniqueness exactly like the Add User form - \"Already exists\" appears as soon as the username is typed, from the same server check (which also sends the user's own id); typing a user's OWN username again is NOT flagged; Save sends no PUT (only the validation request), shows no toast and stays on the form. Shown by mutation: if the rename did go through, the final \"original username\" check fails. The last two checks go through assertUserListed, which waits for that username's own row, so they cannot pass on the previous search's \"(1) Record Found\" still being on screen (a trap hit while probing). Also seen in that mutation: a search made right after a Save redirect did not apply (the list stayed at \"(30) Records Found\") - the second time this was seen after the TC_UCF_008 flake; this test does not search after a save redirect."
   },
   {
     "id": "TC_UDF_001",
@@ -447,12 +447,12 @@
     "type": "Functional",
     "module": "Admin - User Management / Delete User",
     "scenario": "Delete A User From The List",
-    "steps": "1. Create an employee and a user for it through the API\n2. Log in, go to Admin > User Management and search the username\n3. Click the row's delete (trash) button\n4. Confirm the deletion in the dialog\n5. Search the username again",
-    "input": "Self-created ESS / Enabled user",
-    "expected": "A success toast appears and searching the username then returns \"No Records Found\". The employee still exists (only the user is deleted).",
-    "automated": "Planned",
-    "spec": "tests/DeleteUserTest.spec.ts (planned)",
-    "notes": "Planned, not automated yet. Deletes only a user this test created. To verify live: the confirmation dialog's text and buttons (my first probe's dialog locator did not match, so they are not known yet) and the toast text."
+    "steps": "1. Create an employee and an ESS / Enabled user for it through the API\n2. Log in, go to Admin > User Management, search the username and check it is listed\n3. Click the row's delete (trash) button; check the confirmation asks \"Are you Sure?\"\n4. Click \"Yes, Delete\"\n5. Check the toast \"Successfully Deleted\" and that the dialog closed\n6. Check the list no longer shows the user\n7. Search the username again and check no user is found\n8. Check the employee still exists",
+    "input": "Self-created ESS / Enabled user (generated username)",
+    "expected": "The confirmation (\"Are you Sure? The selected record will be permanently deleted...\") appears; after \"Yes, Delete\" the toast \"Successfully Deleted\" shows and the dialog closes. The list, and a fresh search, report \"No Records Found\" for that username. The employee still exists - only the user was deleted.",
+    "automated": "Yes",
+    "spec": "tests/DeleteUserTest.spec.ts",
+    "notes": "Deletes only a user this test created. The employee and user are created through the API; the employee is deleted by teardown at the end, so \"the employee survives\" is checked through the API (TestData.employeeExists, matched on employee number because the id search is a substring match). Verified live before automating: the confirmation is a real role=\"dialog\" with accessible \"No, Cancel\" and \"Yes, Delete\" buttons (my first probe's selector was simply wrong); the row's trash button, like the edit button, has no accessible name and is found by its icon class bi-trash; Yes sends one DELETE /api/v2/admin/users with the user ids, shows \"Successfully Deleted\", stays on the list (NO redirect) and the list refreshes itself, keeping the username filter. Shown by mutation: never confirming, or clicking \"No, Cancel\", leaves no toast and fails at the toast step; the employee check reads real state. The cancel path (user stays) is the separate planned TC_UDF_002."
   },
   {
     "id": "TC_UDF_002",

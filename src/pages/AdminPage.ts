@@ -103,6 +103,11 @@ export default class AdminPage {
     await this.locators.cancelButton.click();
   }
 
+  /** Leaves the Edit User form without saving (it has the same Cancel button). */
+  async cancelEditUser() {
+    await this.locators.cancelButton.click();
+  }
+
   /**
    * Asserts we are on the User Management LIST, not the Add User form. Three
    * independent signs, because any one alone is weak: the list's URL (waiting
@@ -233,6 +238,16 @@ export default class AdminPage {
     await expect(this.locators.successToastMessage).toHaveCount(0);
   }
 
+  /**
+   * Same for the EDIT form: still on /admin/saveSystemUser/<id> (a real save
+   * redirects to the list a few seconds later) and no success toast. The id
+   * in the URL is what tells the edit form from the add form.
+   */
+  async assertStillOnEditUserForm() {
+    await expect(this.page).toHaveURL(/\/admin\/saveSystemUser\/\d+/);
+    await expect(this.locators.successToastMessage).toHaveCount(0);
+  }
+
   async assertUserSaved() {
     await expect(this.locators.successToastMessage).toBeVisible();
     await expect(this.locators.successToastMessage).toHaveText(
@@ -260,6 +275,37 @@ export default class AdminPage {
   async openEditUser(username: string) {
     await this.locators.editButtonInRow(this.locators.userRow(username)).click();
     await this.page.waitForURL("**/admin/saveSystemUser/**");
+  }
+
+  /**
+   * Clicks the row's delete (trash) button and asserts the confirmation
+   * appears with its warning text. Nothing is deleted yet: that only happens
+   * on "Yes, Delete" (see confirmDelete()).
+   */
+  async openDeleteConfirmation(username: string) {
+    await this.locators.deleteButtonInRow(this.locators.userRow(username)).click();
+    await expect(this.locators.deleteDialog).toContainText("Are you Sure?");
+    await expect(this.locators.deleteDialog).toContainText(
+      "The selected record will be permanently deleted",
+    );
+  }
+
+  /** Clicks "Yes, Delete" in the confirmation. */
+  async confirmDelete() {
+    await this.locators.confirmDeleteButton.click();
+  }
+
+  /**
+   * Asserts the delete went through: the toast says "Successfully Deleted"
+   * (verified live; the page stays on the list, there is no redirect) and the
+   * confirmation has closed.
+   */
+  async assertUserDeleted() {
+    await expect(this.locators.successToastMessage).toBeVisible();
+    await expect(this.locators.successToastMessage).toHaveText(
+      "Successfully Deleted",
+    );
+    await expect(this.locators.deleteDialog).toHaveCount(0);
   }
 
   /**

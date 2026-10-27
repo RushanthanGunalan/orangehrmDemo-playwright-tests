@@ -119,6 +119,17 @@ export class TestData {
   }
 
   /**
+   * True if this employee still exists - for a test that deletes something
+   * ELSE (a user) and must prove the employee survived. Matches on the
+   * employee number, because the server's search by id is a substring match.
+   */
+  async employeeExists(employee: EmployeeSummary): Promise<boolean> {
+    if (!employee.employeeId) return false;
+    const hits = await this.store.findEmployees(employee.employeeId);
+    return hits.some((e) => e.empNumber === employee.empNumber);
+  }
+
+  /**
    * Deletes every employee this test created and CONFIRMS they are gone
    * (a second look after each delete). Never throws: a cleanup problem must
    * not turn a passing test red or hide the real failure of a failing one -

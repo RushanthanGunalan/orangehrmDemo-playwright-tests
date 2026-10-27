@@ -25,6 +25,10 @@ export type AdminPageLocators = {
   userRow: (username: string) => Locator;
   dataCellsInRow: (row: Locator) => Locator;
   editButtonInRow: (row: Locator) => Locator;
+  deleteButtonInRow: (row: Locator) => Locator;
+  deleteDialog: Locator;
+  confirmDeleteButton: Locator;
+  cancelDeleteButton: Locator;
 
   // --- Add User form ---
   userRoleSelect: Locator;
@@ -105,6 +109,22 @@ export function adminPageLocators(page: Page): AdminPageLocators {
     // place to update.
     editButtonInRow: (row: Locator) =>
       row.locator("button:has(i.bi-pencil-fill)"),
+    // The row's delete (trash) button - same bare-icon situation as the edit
+    // button above, found by its icon class bi-trash.
+    deleteButtonInRow: (row: Locator) =>
+      row.locator("button:has(i.bi-trash)"),
+    // The confirmation that opens after the trash button. Verified live: it is
+    // a real role="dialog" with the text "Are you Sure? The selected record
+    // will be permanently deleted. Are you sure you want to continue?" and two
+    // buttons that DO have accessible names. Not exact: like "Add" and
+    // "Login" they carry an icon/whitespace before the text.
+    deleteDialog: page.getByRole("dialog"),
+    confirmDeleteButton: page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Yes, Delete" }),
+    cancelDeleteButton: page
+      .getByRole("dialog")
+      .getByRole("button", { name: "No, Cancel" }),
 
     // --- Add User form ---
     // Verified live: none of these inputs have a name/id, so they're found
